@@ -1,5 +1,5 @@
  
-name: deploy polio-collector
+name: Deploy polio-collector app
 on:
   push:
     branches:
