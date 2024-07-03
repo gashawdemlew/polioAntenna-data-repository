@@ -32,7 +32,7 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.GIT_CPANEL_NODE_SERVER }}
-          username: ${{ secrets.GIT_CPANEL_NODE_SERVER }}
-          password: ${{ secrets.GIT_CPANEL_NODE_SERVER }}
-          protocol: ${{ secrets.GIT_CPANEL_NODE_SERVER }}
+          username: ${{ secrets.GIT_CPANEL_NODE_USERNAME }}
+          password: ${{ secrets.GIT_CPANEL_NODE_PASSWORD }}
+          protocol: ${{ secrets.GIT_CPANEL_NODE_PROTOCOL }}
           local-dir: ./build/
