@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-env:
-  ECR_REPO_NAME: dev-demonitoring-api
-  TAG: v1.0.0
-  NAMESPACE: modelmonitoringservice   
-  
-
 jobs:
   web-deploy:
     name: Deploy
