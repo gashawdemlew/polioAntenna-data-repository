@@ -19,7 +19,7 @@ jobs:
 
       - name: Build project
         run: |
-          npm install
+          npm run install
           npm run build
 
       - name: Sync files
