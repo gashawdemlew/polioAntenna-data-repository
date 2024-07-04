@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/polioantennaorg/testgithub.polioantenna.org
+    - /bin/cp -R * $DEPLOYPATH
