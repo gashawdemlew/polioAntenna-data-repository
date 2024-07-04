@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/polioantennaorg/testgithub.polioantenna.org/
+    - export DEPLOYPATH=/home/polioantennaorg/public_html/polio-collector/
     - /bin/cp -R * $DEPLOYPATH
     # - /bin/cp -R . $DEPLOYPATH
