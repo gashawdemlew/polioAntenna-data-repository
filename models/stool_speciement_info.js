@@ -10,7 +10,7 @@ const StoolSpeciement = sequelize.define('stool_speciement_info', {
 
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
   date_stool_1_collected: {
     type: DataTypes.DATE,

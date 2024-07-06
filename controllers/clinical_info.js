@@ -14,16 +14,24 @@ require('dotenv').config();
 const JWT = process.env.JWT_SECRET;
 
 const generateEpidNumber = async () => {
-  const epidCount = await clinicalModel.countDocuments();
-  return `E-${(epidCount + 1).toString().padStart(3, '0')}`;
+  try {
+    const epidCount = await clinicalModel.count() || 0;
+    if (epidCount === 0) {
+      return 'E-001'; // Or any default value you prefer
+    }
+    return `E-${(epidCount + 1).toString().padStart(3, '0')}`;
+  } catch (error) {
+    console.error('Error generating EPID number:', error);
+    throw new Error('Error generating EPID number');
+  }
 };
+
 
 module.exports = {
   create: async (req, res) => {
     const {
       latitude,
       longitude,
-      epid_number,
       first_name,
       phonNo,
       last_name,
@@ -50,10 +58,8 @@ module.exports = {
       date_stool_1_sent_lab,
       date_stool_2_sent_lab,
       case_contact,
-
       stool1DaysAfterOnset,
       stool2DaysAfterOnset,
-  
       stool1DateReceivedByLab,
       stool2DateReceivedByLab,
       specimenCondition,
@@ -68,12 +74,16 @@ module.exports = {
     try {
 
 
-      const petientDoc = new patientdemModel({
+      const epid_number = await generateEpidNumber();
+      var currentDate = new Date().toLocaleDateString();
 
 
+      var completeEpidNumber = `${region}-${zone}-${woreda}-${currentDate}-${epid_number}`;
+
+      const patientDoc = new patientdemModel({
         latitude,
         longitude,
-        epid_number,
+        epid_number:completeEpidNumber,
         first_name,
         phonNo,
         last_name,
@@ -82,9 +92,10 @@ module.exports = {
         region,
         zone,
         woreda,
-      })
-      // Create and save documents in the respective collections
+      });
+
       const clinicalDoc = new clinicalModel({
+        epid_number:completeEpidNumber,
         fever_at_onset,
         flaccid_sudden_paralysis,
         paralysis_progressed,
@@ -98,6 +109,7 @@ module.exports = {
       });
 
       const stool1Doc = new stoolspecimanModel({
+        epid_number:completeEpidNumber,
         date_stool_1_collected,
         date_stool_2_collected,
         date_stool_1_sent_lab,
@@ -105,42 +117,39 @@ module.exports = {
         case_contact,
       });
 
-    
-
-      const followupDoc = new followupModel({
-        date_follow_up_investigation,
-        residual_paralysis,
-        paralysis_progressed,
-      });
-
-      const labstoolDoc = new labstoolModel({
-        specimenCondition,
-        fever_at_onset,
-        flaccid_sudden_paralysis,
-        paralysis_progressed,
-        asymmetric,
-        site_of_paralysis,
-        total_opv_doses,
-        admitted_to_hospital,
-        date_of_admission,
-        medical_record_no,
-        facility_name,
+      const envModel = new environmentModel({
+        epid_number:completeEpidNumber,
         tempreture,
         rainfall,
         humidity,
         snow,
       });
 
+      const followupDoc = new followupModel({
+        epid_number:completeEpidNumber,
+        date_follow_up_investigation,
+        residual_paralysis,
+      });
+
+      const labstoolDoc = new labstoolModel({
+        epid_number:completeEpidNumber,
+        specimenCondition,
+        stool1DateReceivedByLab,
+        stool2DateReceivedByLab,
+      });
+
       await Promise.all([
+        patientDoc.save(),
         clinicalDoc.save(),
         stool1Doc.save(),
-        stool2Doc.save(),
+        envModel.save(),
         followupDoc.save(),
         labstoolDoc.save(),
       ]);
 
       res.status(201).json({ message: 'Documents created successfully' });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
   },

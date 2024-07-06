@@ -10,7 +10,7 @@ const FollowUp = sequelize.define('followup_investigation', {
 
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
   date_follow_up_investigation: {
     type: DataTypes.DATE,

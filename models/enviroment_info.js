@@ -9,7 +9,7 @@ const LabratoryInfo = sequelize.define('enviroment_info', {
   },
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
 
   tempreture: {

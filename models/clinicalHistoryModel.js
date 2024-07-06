@@ -10,7 +10,7 @@ const ClinicalHistory = sequelize.define('clinical_history', {
 
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
   date_after_onset: {
     type: DataTypes.DATE,

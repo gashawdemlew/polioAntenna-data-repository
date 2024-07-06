@@ -10,7 +10,7 @@ const User = sequelize.define('petient_demography', {
 
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
   region_id: {
     type: DataTypes.STRING,
