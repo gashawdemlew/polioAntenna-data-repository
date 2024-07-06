@@ -13,42 +13,78 @@ require('dotenv').config();
 
 const JWT = process.env.JWT_SECRET;
 
-// if (!JWT) {
-//   throw new Error("JWT_SECRET is not defined in environment variables");
-// }
-
-// Function to generate a new EPID number
 const generateEpidNumber = async () => {
-  const epidCount = await clinicalModel.count();
+  const epidCount = await clinicalModel.countDocuments();
   return `E-${(epidCount + 1).toString().padStart(3, '0')}`;
 };
 
 module.exports = {
   create: async (req, res) => {
     const {
-      date_after_onset = null,
-      fever_at_onset = null,
-      flaccid_sudden_paralysis = null,
-      paralysis_progressed = null,
-      asymmetric = null,
-      site_of_paralysis = null,
-      total_opv_doses = null,
-      admitted_to_hospital = null,
-      date_of_admission = null,
-      medical_record_no = null,
-      facility_name = null
+      latitude,
+      longitude,
+      epid_number,
+      first_name,
+      phonNo,
+      last_name,
+      gender,
+      dateofbirth,
+      region,
+      zone,
+      woreda,
+      fever_at_onset,
+      flaccid_sudden_paralysis,
+      paralysis_progressed,
+      asymmetric,
+      site_of_paralysis,
+      total_opv_doses,
+      admitted_to_hospital,
+      date_of_admission,
+      medical_record_no,
+      facility_name,
+      dateStool1,
+      dateStool2,
+      date_after_onset,
+      date_stool_1_collected,
+      date_stool_2_collected,
+      date_stool_1_sent_lab,
+      date_stool_2_sent_lab,
+      case_contact,
+
+      stool1DaysAfterOnset,
+      stool2DaysAfterOnset,
+  
+      stool1DateReceivedByLab,
+      stool2DateReceivedByLab,
+      specimenCondition,
+      date_follow_up_investigation,
+      residual_paralysis,
+      tempreture,
+      rainfall,
+      humidity,
+      snow,
     } = req.body;
 
-    console.log(req.body);
-
     try {
-      // Generate a new EPID number
-      const epidNumber = await generateEpidNumber();
 
-      // Create a new clinical history record
-      const newClinicalHistory = await clinicalModel.create({
-        epid_number: epidNumber,
-        date_after_onset,
+
+      const petientDoc = new patientdemModel({
+
+
+        latitude,
+        longitude,
+        epid_number,
+        first_name,
+        phonNo,
+        last_name,
+        gender,
+        dateofbirth,
+        region,
+        zone,
+        woreda,
+      })
+      // Create and save documents in the respective collections
+      const clinicalDoc = new clinicalModel({
         fever_at_onset,
         flaccid_sudden_paralysis,
         paralysis_progressed,
@@ -58,13 +94,54 @@ module.exports = {
         admitted_to_hospital,
         date_of_admission,
         medical_record_no,
-        facility_name
+        facility_name,
       });
 
-      res.status(200).json({ message: "Clinical History registered successfully", newClinicalHistory });
+      const stool1Doc = new stoolspecimanModel({
+        date_stool_1_collected,
+        date_stool_2_collected,
+        date_stool_1_sent_lab,
+        date_stool_2_sent_lab,
+        case_contact,
+      });
+
+    
+
+      const followupDoc = new followupModel({
+        date_follow_up_investigation,
+        residual_paralysis,
+        paralysis_progressed,
+      });
+
+      const labstoolDoc = new labstoolModel({
+        specimenCondition,
+        fever_at_onset,
+        flaccid_sudden_paralysis,
+        paralysis_progressed,
+        asymmetric,
+        site_of_paralysis,
+        total_opv_doses,
+        admitted_to_hospital,
+        date_of_admission,
+        medical_record_no,
+        facility_name,
+        tempreture,
+        rainfall,
+        humidity,
+        snow,
+      });
+
+      await Promise.all([
+        clinicalDoc.save(),
+        stool1Doc.save(),
+        stool2Doc.save(),
+        followupDoc.save(),
+        labstoolDoc.save(),
+      ]);
+
+      res.status(201).json({ message: 'Documents created successfully' });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error: Failed to register clinical history' });
+      res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
   },
 };
