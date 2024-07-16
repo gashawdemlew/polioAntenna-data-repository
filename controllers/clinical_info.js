@@ -69,6 +69,9 @@ module.exports = {
       rainfall,
       humidity,
       snow,
+
+      hofficer_name,
+  hofficer_phonno
     } = req.body;
 
     try {
@@ -138,13 +141,29 @@ module.exports = {
         stool2DateReceivedByLab,
       });
 
+      const pushMessage = new pushMessageModel({
+        // latitude,
+        // longitude,
+        epid_number:completeEpidNumber,
+        first_name,
+        last_name,
+     
+        hofficer_name,
+        hofficer_phonno,
+        region,
+        zone,
+        woreda,
+        status:"unseen"
+      });
+
       await Promise.all([
         patientDoc.save(),
         clinicalDoc.save(),
-        stool1Doc.save(),
-        envModel.save(),
-        followupDoc.save(),
-        labstoolDoc.save(),
+        pushMessage.save(),
+        // stool1Doc.save(),
+        // envModel.save(),
+        // followupDoc.save(),
+        // labstoolDoc.save(),
       ]);
 
       res.status(201).json({ message: 'Documents created successfully' });
@@ -152,5 +171,15 @@ module.exports = {
       console.error(error);
       res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
+  },
+
+  getMessages: (req, res) => {
+    pushMessageModel.findAll()
+      .then((user) => {
+        res.json(user);
+      })
+      .catch((error) => {
+        res.status(500).json({ error: 'Failed to retrieve user' });
+      });
   },
 };

@@ -73,7 +73,7 @@ console.log(req.body);
 
   getStudentById: (req, res) => {
     const id = req.params.id;
-    Student.findByPk(id)
+    User.findByPk(id)
       .then((student) => {
         if (student) {
           res.json(student);
