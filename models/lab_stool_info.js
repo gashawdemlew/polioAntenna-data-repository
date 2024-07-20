@@ -9,16 +9,11 @@ const LabratoryInfo = sequelize.define('lab_stool_info', {
   },
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
   },
 
-  epid_number: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
+
   stool_1_recieved_date: {
     type: DataTypes.DATE,
-    unique: true,
   },
   stool_2_recieved_date: {
     type: DataTypes.DATE,

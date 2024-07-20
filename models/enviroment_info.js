@@ -14,11 +14,9 @@ const LabratoryInfo = sequelize.define('enviroment_info', {
 
   tempreture: {
     type: DataTypes.STRING,
-    unique: true,
   },
   rainfall: {
     type: DataTypes.STRING,
-    unique: true,
   },
   humidity: {
     type: DataTypes.STRING,

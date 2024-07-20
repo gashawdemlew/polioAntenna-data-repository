@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 
-const LabratoryInfo = sequelize.define('demographic_by_vol', {
+const demographic = sequelize.define('demographic_by_vol', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -34,13 +34,7 @@ const LabratoryInfo = sequelize.define('demographic_by_vol', {
         type: DataTypes.STRING,
       },
 
-      iamge_path: {
-        type: DataTypes.STRING,
-        unique: true,
-      },
-      viedeo_path: {
-        type: DataTypes.STRING,
-      },
+  
 
       selected_health_officcer: {
         type: DataTypes.STRING,
@@ -72,4 +66,4 @@ async function initialize() {
 
 initialize();
 
-module.exports = LabratoryInfo;
+module.exports = demographic;

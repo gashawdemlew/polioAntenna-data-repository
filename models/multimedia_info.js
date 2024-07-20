@@ -9,7 +9,7 @@ const MultimediaInfo = sequelize.define('multimedia_info', {
   },
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+    // unique: true,
   },
   iamge_path: {
     type: DataTypes.STRING,
