@@ -21,7 +21,9 @@ const LabratoryInfo = sequelize.define('lab_stool_info', {
   speciement_condition: {
     type: DataTypes.STRING,
   },
-  
+  user_id: {
+    type: DataTypes.STRING,
+  },
  
 
 

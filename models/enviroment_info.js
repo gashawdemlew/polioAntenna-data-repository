@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 
-const LabratoryInfo = sequelize.define('enviroment_info', {
+const LabratoryInfo = sequelize.define('enviroment_info1', {
   env_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -15,7 +15,10 @@ const LabratoryInfo = sequelize.define('enviroment_info', {
   tempreture: {
     type: DataTypes.STRING,
   },
-  rainfall: {
+  // rainfall: { 
+  //   type: DataTypes.STRING,
+  // },
+  rainfall: { 
     type: DataTypes.STRING,
   },
   humidity: {
@@ -26,7 +29,9 @@ const LabratoryInfo = sequelize.define('enviroment_info', {
   },
   
  
-
+  user_id: {
+    type: DataTypes.STRING,
+  },
 
 });
 

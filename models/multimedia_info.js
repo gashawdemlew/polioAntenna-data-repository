@@ -19,7 +19,9 @@ const MultimediaInfo = sequelize.define('multimedia_info', {
     type: DataTypes.STRING,
   },
 
- 
+  user_id: {
+    type: DataTypes.STRING,
+  },
 
 
 });

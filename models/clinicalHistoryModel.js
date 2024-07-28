@@ -45,6 +45,9 @@ const ClinicalHistory = sequelize.define('clinical_history', {
   facility_name: {
     type: DataTypes.STRING,
   },
+  user_id: {
+    type: DataTypes.STRING,
+  },
 });
 
 async function syncModels() {

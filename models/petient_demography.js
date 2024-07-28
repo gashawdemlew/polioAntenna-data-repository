@@ -48,8 +48,13 @@ const User = sequelize.define('petient_demography', {
   long: {
     type: DataTypes.STRING,
   },
- 
- 
+  user_id: {
+    type: DataTypes.STRING,
+  },
+  progressNo: {
+    type: DataTypes.STRING,
+
+  },
 });
 
 async function syncModels() {

@@ -39,6 +39,10 @@ const demographic = sequelize.define('demographic_by_vol', {
       selected_health_officcer: {
         type: DataTypes.STRING,
       },
+
+      user_id: {
+        type: DataTypes.STRING,
+      },
  
 
 

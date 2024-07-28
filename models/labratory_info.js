@@ -29,7 +29,9 @@ const LabratoryInfo = sequelize.define('labaratory_info', {
   final_combined_itd_result: {
     type: DataTypes.STRING,
   },
- 
+  user_id: {
+    type: DataTypes.STRING,
+  },
 
 
 });

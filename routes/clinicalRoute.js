@@ -5,6 +5,30 @@ const userController = require('../controllers/clinical_info'); // Updated path
 // Define the routes
 router.post('/post', userController.register,);
 router.post('/create', userController.uploadFiles, userController.create);
+router.post('/prtientdemographi', userController.prtientdemographi);
+router.post('/clinicalHistory', userController.clinicalHistory);
+router.post('/StoolSpeciement', userController.StoolSpeciement);
+router.post('/enviroment', userController.enviroment);
+router.post('/labstoolDoc', userController.labstoolDoc);
+router.post('/followup', userController.followup);
+router.delete('/deletData', userController.deletData);
+router.get('/getData', userController.getData);
+router.get('/getDataByUserId/:user_id', userController.getDataByUserId);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 router.get('/getMessage676', userController.getMessages);

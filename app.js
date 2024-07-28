@@ -32,7 +32,27 @@ async function checkDatabaseConnection() {
 
 
 
+async function syncModels() {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('Models synchronized with the database.');
+  } catch (error) {
+    console.error('Unable to sync models with the database:', error);
+  }
+}
 
+// Check database connection and sync models
+async function initialize() {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
+    await syncModels();
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+}
+
+initialize();
 async function getLastEpidNumber() {
   try {
     const lastEpidNumber = await clinicalModel.max('epid_number');

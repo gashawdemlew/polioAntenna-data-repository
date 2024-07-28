@@ -25,7 +25,9 @@ const FollowUp = sequelize.define('followup_investigation', {
     type: DataTypes.STRING,
   },
  
-
+  user_id: {
+    type: DataTypes.STRING,
+  },
 
 });
 

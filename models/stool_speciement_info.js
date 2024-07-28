@@ -30,7 +30,9 @@ const StoolSpeciement = sequelize.define('stool_speciement_info', {
   },
 
  
-
+  user_id: {
+    type: DataTypes.STRING,
+  },
 
 });
 

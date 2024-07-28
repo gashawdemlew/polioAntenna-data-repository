@@ -44,17 +44,60 @@ console.log(req.body);
   
       // Generate JWT
       const token = jwt.sign({ userId: user.user_id }, JWT);
-      res.status(200).json({ message:"Successfully Login",token: token,
-        user_role:user.user_role
+      res.status(200).json({ message:"Successfully Login",
+        token: token,
+    
+
+        user_id:user.user_id,
+        first_name:user.first_name,
+        last_name:user.last_name,
+        password:user.password,
 
 
+        user_role:user.user_role,
+        phoneNo:user.phoneNo,
+        zone:user.zone,
+        woreda:user.woreda,
+        region:user.id,
+   
 
-
-
-
+      
 
       });
       }
+
+      // user_id: {
+      //   type: DataTypes.INTEGER,
+      //   primaryKey: true,
+      //   autoIncrement: true,
+      // },
+      // first_name: {
+      //   type: DataTypes.STRING,
+      // },
+      // last_name: {
+      //   type: DataTypes.STRING,
+      // },
+      // phoneNo: {
+      //   type: DataTypes.STRING,
+      // },
+      // zone: {
+      //   type: DataTypes.STRING,
+      // },
+      // woreda: {
+      //   type: DataTypes.STRING,
+      // },
+      // lat: {
+      //   type: DataTypes.STRING,
+      // },
+      // long: {
+      //   type: DataTypes.STRING,
+      // },
+      // user_role: {
+      //   type: DataTypes.STRING,
+      // },
+      // password: {
+      //   type: DataTypes.STRING,
+      // },
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });

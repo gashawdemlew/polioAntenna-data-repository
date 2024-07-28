@@ -43,7 +43,9 @@ const LabratoryInfo = sequelize.define('push_message', {
     type: DataTypes.STRING,
   },
 
-
+  user_id: {
+    type: DataTypes.STRING,
+  },
 });
 
 async function syncModels() {
