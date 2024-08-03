@@ -5,7 +5,7 @@ const JWT = process.env.JWT_SECRET
 
 module.exports = {
   create: async (req, res) => {
-    const { first_name, last_name,phoneNo,zone,woreda,lat,long,user_role,password } = req.body;
+    const { first_name, last_name,phoneNo,region,zone,woreda,lat,long,user_role,password } = req.body;
 console.log(JWT);
 console.log(req.body);
     try {
@@ -19,7 +19,7 @@ console.log(req.body);
       }
   
       // Create a new user
-      const newUser = await User.create({ first_name, last_name,phoneNo,zone,woreda,lat,long,user_role,password });
+      const newUser = await User.create({ first_name, last_name,phoneNo,region,zone,woreda,lat,long,user_role,password });
   
       // Generate JWT
       const token = jwt.sign({ userId: newUser.user_id }, JWT);

@@ -9,6 +9,8 @@ const patientdemModel = require('../models/petient_demography');
 const pushMessageModel = require('../models/push_message_labspec');
 const stoolspecimanModel = require('../models/stool_speciement_info');
 const progress = require('../models/progress');
+const User = require('../models/userModel');
+
 const { Op } = require('sequelize');
 
 const multer = require('multer');
@@ -107,6 +109,43 @@ module.exports = {
     }
   },
   
+  createVol: async (req, res) => {
+    const { first_name, last_name,region,woreda,zone, hofficer_name,lat,long } = req.body;
+    console.log(req.body);
+  
+    try {
+      // Handle file uploads
+      const multimediaData = {
+        first_name,
+        last_name,
+        hofficer_name,
+        region,woreda,zone,
+      };
+  
+      if (req.files && req.files.image) {
+        const { path: filePath } = req.files.image[0];
+        multimediaData.image_path = filePath;
+      }
+  
+      if (req.files && req.files.video) {
+        const { path: filePath } = req.files.video[0];
+        multimediaData.video_path = filePath;
+      }
+  
+      const multimediaDoc = new demographiVolModel(multimediaData);
+  
+      await multimediaDoc.save();
+  
+      res.status(201).json(multimediaDoc);
+      console.log(`RRRRRRRRRR ${multimediaDoc}`);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while creating the documents' });
+    }
+  },
+  
+
+
   uploadFiles: upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]),
 
   getMessages: (req, res) => {
@@ -119,7 +158,7 @@ module.exports = {
       });
   },
   getData: (req, res) => {
-    followupModel.findAll()
+    labstoolModel.findAll()
       .then((messages) => {
         res.json(messages);
       })
@@ -148,6 +187,37 @@ module.exports = {
       res.status(500).json({ error: 'Failed to retrieve data' });
     }
   },
+
+  getStoolData: async (req, res) => {
+    try {
+      const data = await labstoolModel.findAll();
+      res.json(data);
+    } catch (error) {
+      console.error('Error retrieving data:', error);
+      res.status(500).json({ error: 'Failed to retrieve data' });
+    }
+  },
+
+  getStoolByUserId: async (req, res) => {
+    const { user_id } = req.params;
+  
+    try {
+      const data = await patientdemModel.findAll({
+        where: {
+          user_id: user_id,
+          progressNo: {
+            [Op.ne]: 'completed'
+          }
+        }
+      });
+  
+      res.json(data);
+    } catch (error) {
+      console.error('Error retrieving data:', error);
+      res.status(500).json({ error: 'Failed to retrieve data' });
+    }
+  },
+
   deletData: (req, res) => {
     clinicalModel.destroy({
       where: {},
@@ -170,7 +240,14 @@ module.exports = {
         date_cell_culture_result,
         final_combined_itd_result,
       } = req.body;
+      const message = await labstoolModel.findOne({ where: { epid_number: epid_number } });
+      console.log(message);
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
   
+      message.completed = 'true';
+      message.save();
       const newLabInfo = await labratoryModel.create({
         epid_number,
         true_afp,
@@ -185,6 +262,43 @@ module.exports = {
       res.status(500).json({ error: 'Error creating lab info' });
     }
   },
+  registerStool: async (req, res) => {
+    try {
+      // Validate request body
+      const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
+      if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+  
+      // Create new lab stool entry
+      const labForm = await labstoolModel.create({
+        epid_number,
+        stool_recieved_date,
+        speciement_condition,
+        type,
+        user_id,
+        completed: "false"
+      });
+  
+      // Respond with the created entry
+      res.status(201).json({
+        success: true,
+        message: 'Lab stool entry created successfully',
+        data: labForm
+      });
+  
+    } catch (error) {
+      // Log error and respond with error message
+      console.error('Error registering stool:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while registering the stool',
+        error: error.message
+      });
+    }
+  },
+  
+
 
   updateMessageStatus: async (req, res) => {
     try {
@@ -267,6 +381,10 @@ module.exports = {
       res.status(500).json({ error: 'Error creating lab info' });
     }
   },
+
+
+
+  
   clinicalHistory: async (req, res) => {
     const {
       epid_number,
@@ -430,6 +548,60 @@ user_id,
       res.status(500).json({ error: 'Error creating data ' });
     }
   },
+
+  demoByVolunter: async (req, res) => {
+    const { woreda, region, zone } = req.query;
+    console.log(req.query);
+  
+    // Construct a query object conditionally
+    let query = {};
+  
+    // Check if the values exist in the user table
+    const existingUsers = await User.findAll({
+      attributes: ['woreda', 'region', 'zone'],
+      group: ['woreda', 'region', 'zone'],
+    });
+  
+    const existingWoredas = existingUsers.map(user => user.woreda);
+    const existingRegions = existingUsers.map(user => user.region);
+    const existingZones = existingUsers.map(user => user.zone);
+  
+    // Priority 1: All three values match
+    if (woreda && region && zone && 
+        existingWoredas.includes(woreda) && 
+        existingRegions.includes(region) && 
+        existingZones.includes(zone)) {
+      query = { woreda, region, zone };
+    } 
+    // Priority 2: Woreda and Zone match
+    else if (woreda && zone && 
+             existingWoredas.includes(woreda) && 
+             existingZones.includes(zone)) {
+      query = { woreda, zone };
+    } 
+    // Priority 3: Only Woreda matches
+    else if (woreda && existingWoredas.includes(woreda)) {
+      query = { woreda };
+    }
+  
+    try {
+      const users = await User.findAll({
+        where: query,
+      });
+  
+      res.json(users);
+      console.log(users);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+    }
+  },
+  
+  
+    
+
+
+ 
 
   labstoolDoc: async (req, res) => {
     const {

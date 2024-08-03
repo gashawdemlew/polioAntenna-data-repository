@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 
-const LabratoryInfo = sequelize.define('lab_stool_info', {
+const LabratoryInfo = sequelize.define('lab_stool_info1', {
   stool_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -12,13 +12,16 @@ const LabratoryInfo = sequelize.define('lab_stool_info', {
   },
 
 
-  stool_1_recieved_date: {
+  stool_recieved_date: {
     type: DataTypes.DATE,
   },
-  stool_2_recieved_date: {
-    type: DataTypes.DATE,
+  type: {
+    type: DataTypes.STRING,
   },
   speciement_condition: {
+    type: DataTypes.STRING,
+  },
+  completed: {
     type: DataTypes.STRING,
   },
   user_id: {

@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
+
 const userController = require('../controllers/clinical_info'); // Updated path
 
 // Define the routes
 router.post('/post', userController.register,);
 router.post('/create', userController.uploadFiles, userController.create);
+router.post('/upload', userController.uploadFiles, userController.createVol);
+
 router.post('/prtientdemographi', userController.prtientdemographi);
+router.get('/demoByVolunter', userController.demoByVolunter);
+router.get('/demoByVolunter', userController.demoByVolunter);
+
+router.post('/getStoolByUserId', userController.getStoolByUserId);
+
 router.post('/clinicalHistory', userController.clinicalHistory);
 router.post('/StoolSpeciement', userController.StoolSpeciement);
 router.post('/enviroment', userController.enviroment);

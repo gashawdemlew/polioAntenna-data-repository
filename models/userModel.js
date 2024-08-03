@@ -16,6 +16,9 @@ const User = sequelize.define('usertable', {
   phoneNo: {
     type: DataTypes.STRING,
   },
+  region: {
+    type: DataTypes.STRING,
+  },
   zone: {
     type: DataTypes.STRING,
   },

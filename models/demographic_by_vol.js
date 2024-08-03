@@ -33,7 +33,14 @@ const demographic = sequelize.define('demographic_by_vol', {
       long: {
         type: DataTypes.STRING,
       },
-
+      iamge_path: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+      viedeo_path: {
+        type: DataTypes.STRING,
+      },
+    
   
 
       selected_health_officcer: {
