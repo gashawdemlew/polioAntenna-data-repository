@@ -298,7 +298,41 @@ module.exports = {
     }
   },
   
-
+  registerStool: async (req, res) => {
+    try {
+      // Validate request body
+      const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
+      if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+  
+      // Create new lab stool entry
+      const labForm = await labstoolModel.create({
+        epid_number,
+        stool_recieved_date,
+        speciement_condition,
+        type,
+        user_id,
+        completed: "false"
+      });
+  
+      // Respond with the created entry
+      res.status(201).json({
+        success: true,
+        message: 'Lab stool entry created successfully',
+        data: labForm
+      });
+  
+    } catch (error) {
+      // Log error and respond with error message
+      console.error('Error registering stool:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while registering the stool',
+        error: error.message
+      });
+    }
+  },
 
   updateMessageStatus: async (req, res) => {
     try {

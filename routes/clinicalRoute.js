@@ -8,6 +8,8 @@ router.post('/post', userController.register,);
 router.post('/create', userController.uploadFiles, userController.create);
 router.post('/upload', userController.uploadFiles, userController.createVol);
 
+router.post('/test/testStool', userController.testStool);
+
 router.post('/prtientdemographi', userController.prtientdemographi);
 router.get('/demoByVolunter', userController.demoByVolunter);
 router.get('/demoByVolunter', userController.demoByVolunter);
