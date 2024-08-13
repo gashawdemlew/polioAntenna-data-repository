@@ -37,6 +37,12 @@ const User = sequelize.define('usertable', {
   password: {
     type: DataTypes.STRING,
   },
+  emergency_phonno: {
+    type: DataTypes.STRING,
+    
+  },
+
+  
 });
 
 // async function syncModels() {

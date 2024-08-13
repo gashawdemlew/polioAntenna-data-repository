@@ -5,7 +5,7 @@ const JWT = process.env.JWT_SECRET
 
 module.exports = {
   create: async (req, res) => {
-    const { first_name, last_name,phoneNo,region,zone,woreda,lat,long,user_role,password } = req.body;
+    const { first_name, last_name,phoneNo,emergency_phonno,region,zone,woreda,lat,long,user_role,password } = req.body;
 console.log(JWT);
 console.log(req.body);
     try {
@@ -19,7 +19,7 @@ console.log(req.body);
       }
   
       // Create a new user
-      const newUser = await User.create({ first_name, last_name,phoneNo,region,zone,woreda,lat,long,user_role,password });
+      const newUser = await User.create({ first_name, last_name,phoneNo,region,emergency_phonno,zone,woreda,lat,long,user_role,password });
   
       // Generate JWT
       const token = jwt.sign({ userId: newUser.user_id }, JWT);
@@ -58,7 +58,10 @@ console.log(req.body);
         phoneNo:user.phoneNo,
         zone:user.zone,
         woreda:user.woreda,
+        woreda:user.region,
+
         region:user.id,
+        emergency_phonno:user.emergency_phonno,
    
 
       
@@ -129,17 +132,38 @@ console.log(req.body);
       });
   },
 
-  updateStudent: (req, res) => {
-    const id = req.params.id;
-    const { name, age, email, mark } = req.body;
-    User.update({ name, age, email, mark }, { where: { id } })
-      .then(() => {
-        res.json({ message: 'Student updated successfully' });
-      })
-      .catch((error) => {
-        res.status(500).json({ error: 'Failed to update student' });
+// Assuming you're using Sequelize for ORM
+ updateUser :(req, res) => {
+  const id = req.params.id;
+  const { first_name, last_name, phoneNo, zone, woreda, region, password } = req.body;
+
+  // Ensure the user exists before trying to update
+  User.findByPk(id)
+    .then(user => {
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Update user details
+      return user.update({
+        first_name,
+        last_name,
+        phoneNo,
+        zone,
+        woreda,
+        region,
+        password // Consider hashing the password before storing it
       });
-  },
+    })
+    .then(() => {
+      res.json({ message: 'User updated successfully' });
+    })
+    .catch((error) => {
+      console.error(error); // Log the error for debugging
+      res.status(500).json({ error: 'Failed to update user' });
+    });
+},
+
 
   deleteStudent: (req, res) => {
     const id = req.params.id;

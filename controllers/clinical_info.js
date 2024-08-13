@@ -119,7 +119,7 @@ module.exports = {
         first_name,
         last_name,
         hofficer_name,
-        region,woreda,zone,
+        region,woreda,zone,lat,long
       };
   
       if (req.files && req.files.image) {
@@ -230,6 +230,39 @@ module.exports = {
       res.status(500).json({ error: 'Failed to delete records' });
     });
   },
+
+  register: async (req, res) => {
+    try {
+      const {
+        epid_number,
+        true_afp,
+        final_cell_culture_result,
+        date_cell_culture_result,
+        final_combined_itd_result,
+      } = req.body;
+      const message = await labstoolModel.findOne({ where: { epid_number: epid_number } });
+      console.log(message);
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+  
+      message.completed = 'true';
+      message.save();
+      const newLabInfo = await demographiVolModel.create({
+        epid_number,
+        true_afp,
+        final_cell_culture_result,
+        date_cell_culture_result,
+        final_combined_itd_result,
+      });
+  
+      res.status(201).json(newLabInfo);
+    } catch (error) {
+      console.error('Error creating lab info:', error);
+      res.status(500).json({ error: 'Error creating lab info' });
+    }
+  },
+
 
   register: async (req, res) => {
     try {
@@ -583,42 +616,71 @@ user_id,
     }
   },
 
-  demoByVolunter: async (req, res) => {
+
+  demoByVolunteer: async (req, res) => {
     const { woreda, region, zone } = req.query;
     console.log(req.query);
   
-    // Construct a query object conditionally
-    let query = {};
-  
-    // Check if the values exist in the user table
-    const existingUsers = await User.findAll({
-      attributes: ['woreda', 'region', 'zone'],
-      group: ['woreda', 'region', 'zone'],
-    });
-  
-    const existingWoredas = existingUsers.map(user => user.woreda);
-    const existingRegions = existingUsers.map(user => user.region);
-    const existingZones = existingUsers.map(user => user.zone);
-  
-    // Priority 1: All three values match
-    if (woreda && region && zone && 
-        existingWoredas.includes(woreda) && 
-        existingRegions.includes(region) && 
-        existingZones.includes(zone)) {
-      query = { woreda, region, zone };
-    } 
-    // Priority 2: Woreda and Zone match
-    else if (woreda && zone && 
-             existingWoredas.includes(woreda) && 
-             existingZones.includes(zone)) {
-      query = { woreda, zone };
-    } 
-    // Priority 3: Only Woreda matches
-    else if (woreda && existingWoredas.includes(woreda)) {
-      query = { woreda };
-    }
-  
     try {
+      // Retrieve unique combinations of woreda, region, and zone
+      const existingUsers = await User.findAll({
+        attributes: ['woreda', 'region', 'zone'],
+        group: ['woreda', 'region', 'zone'],
+        raw: true, // Use raw: true to get plain objects
+      });
+  
+      let query = {};
+  
+      // Priority 1: All three match
+      if (woreda && region && zone) {
+        const match = existingUsers.find(user => 
+          user.woreda === woreda && user.region === region && user.zone === zone
+        );
+        if (match) query = { woreda, region, zone };
+      }
+  
+      // Priority 2: Two match
+      if (!Object.keys(query).length) {
+        if (woreda && zone) {
+          const match = existingUsers.find(user => 
+            user.woreda === woreda && user.zone === zone
+          );
+          if (match) query = { woreda, zone };
+        }
+  
+        if (!Object.keys(query).length && region && zone) {
+          const match = existingUsers.find(user => 
+            user.region === region && user.zone === zone
+          );
+          if (match) query = { region, zone };
+        }
+  
+        if (!Object.keys(query).length && woreda && region) {
+          const match = existingUsers.find(user => 
+            user.woreda === woreda && user.region === region
+          );
+          if (match) query = { woreda, region };
+        }
+      }
+  
+      // Priority 3: One match
+      if (!Object.keys(query).length) {
+        if (woreda) {
+          const match = existingUsers.find(user => user.woreda === woreda);
+          if (match) query = { woreda };
+        }
+  
+        if (!Object.keys(query).length && region) {
+          const match = existingUsers.find(user => user.region === region);
+          if (match) query = { region };
+        }
+  
+        if (!Object.keys(query).length && zone) {
+          const match = existingUsers.find(user => user.zone === zone);
+          if (match) query = { zone };
+        }
+      }
+  
       const users = await User.findAll({
         where: query,
       });
@@ -630,6 +692,7 @@ user_id,
       res.status(500).send('Server error');
     }
   },
+  
   
   
     
