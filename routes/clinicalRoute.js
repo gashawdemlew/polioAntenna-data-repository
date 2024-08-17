@@ -22,6 +22,8 @@ router.post('/followup', userController.followup);
 router.delete('/deletData', userController.deletData);
 router.get('/getData', userController.getData);
 router.get('/getDataByUserId/:user_id', userController.getDataByUserId);
+router.delete('/deleteDataById/:petient_id', userController.deleteDataById);
+
 
 
 

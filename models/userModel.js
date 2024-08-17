@@ -25,6 +25,9 @@ const User = sequelize.define('usertable', {
   woreda: {
     type: DataTypes.STRING,
   },
+  gender: {
+    type: DataTypes.STRING,
+  },
   lat: {
     type: DataTypes.STRING,
   },

@@ -32,7 +32,9 @@ const LabratoryInfo = sequelize.define('labaratory_info', {
   user_id: {
     type: DataTypes.STRING,
   },
-
+  status: {
+    type: DataTypes.STRING,
+  },
 
 });
 

@@ -93,7 +93,7 @@ module.exports = {
         status: "unseen"
       });
   
-      patient.progressNo = 'completed';
+      patient.progressNo = '12';
       await patient.save();
   
       await Promise.all([
@@ -110,7 +110,7 @@ module.exports = {
   },
   
   createVol: async (req, res) => {
-    const { first_name, last_name,region,woreda,zone, hofficer_name,lat,long } = req.body;
+    const { first_name, last_name,region,woreda,zone,gender,phonNo, hofficer_name,lat,long } = req.body;
     console.log(req.body);
   
     try {
@@ -119,7 +119,7 @@ module.exports = {
         first_name,
         last_name,
         hofficer_name,
-        region,woreda,zone,lat,long
+        region,woreda,zone,lat,long,gender,phonNo,
       };
   
       if (req.files && req.files.image) {
@@ -157,15 +157,35 @@ module.exports = {
         res.status(500).json({ error: 'Failed to retrieve messages' });
       });
   },
-  getData: (req, res) => {
-    labstoolModel.findAll()
-      .then((messages) => {
-        res.json(messages);
-      })
-      .catch((error) => {
-        res.status(500).json({ error: 'Failed to retrieve messages' });
+  // getData: (req, res) => {
+  //   labstoolModel.findAll()
+  //     .then((messages) => {
+  //       res.json(messages);
+  //     })
+  //     .catch((error) => {
+  //       res.status(500).json({ error: 'Failed to retrieve messages' });
+  //     });
+  // },
+  getData: async (req, res) => {
+    // const { user_id } = req.params;
+  
+    try {
+      const data = await labstoolModel.findAll({
+        where: {
+          // user_id: user_id,
+          completed: {
+            [Op.ne]: 'true'
+          }
+        }
       });
+  
+      res.json(data);
+    } catch (error) {
+      console.error('Error retrieving data:', error);
+      res.status(500).json({ error: 'Failed to retrieve data' });
+    }
   },
+  
 
   
   getDataByUserId: async (req, res) => {
@@ -187,7 +207,27 @@ module.exports = {
       res.status(500).json({ error: 'Failed to retrieve data' });
     }
   },
-
+   deleteDataById: async (req, res) => {
+    const { petient_id } = req.params;
+  
+    try {
+      const data = await patientdemModel.destroy({
+        where: {
+          petient_id: petient_id
+        }
+      });
+  
+      if (data === 0) {
+        return res.status(404).json({ error: 'No record found with this ID' });
+      }
+  
+      res.json({ message: 'Record deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      res.status(500).json({ error: 'Failed to delete record' });
+    }
+  },
+  
   getStoolData: async (req, res) => {
     try {
       const data = await labstoolModel.findAll();
@@ -255,7 +295,7 @@ module.exports = {
         date_cell_culture_result,
         final_combined_itd_result,
       });
-  
+  console.log(newLabInfo);
       res.status(201).json(newLabInfo);
     } catch (error) {
       console.error('Error creating lab info:', error);
@@ -298,10 +338,13 @@ module.exports = {
   registerStool: async (req, res) => {
     try {
       // Validate request body
-      const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
-      if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
+      const { epid_number, stool_recieved_date, speciement_condition, user_id, type } = req.body;
+      // if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
+      //   return res.status(400).json({ error: 'Missing required fields' });
+      // }
+  
+      // Determine the value of completed based on type
+      const completed = type === "Stool 1" ? "false" :"true";
   
       // Create new lab stool entry
       const labForm = await labstoolModel.create({
@@ -310,7 +353,7 @@ module.exports = {
         speciement_condition,
         type,
         user_id,
-        completed: "false"
+        completed
       });
   
       // Respond with the created entry
@@ -331,41 +374,42 @@ module.exports = {
     }
   },
   
-  registerStool: async (req, res) => {
-    try {
-      // Validate request body
-      const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
-      if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
   
-      // Create new lab stool entry
-      const labForm = await labstoolModel.create({
-        epid_number,
-        stool_recieved_date,
-        speciement_condition,
-        type,
-        user_id,
-        completed: "false"
-      });
+  // registerStool: async (req, res) => {
+  //   try {
+  //     // Validate request body
+  //     const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
+  //     if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
+  //       return res.status(400).json({ error: 'Missing required fields' });
+  //     }
   
-      // Respond with the created entry
-      res.status(201).json({
-        success: true,
-        message: 'Lab stool entry created successfully',
-        data: labForm
-      });
+  //     // Create new lab stool entry
+  //     const labForm = await labstoolModel.create({
+  //       epid_number,
+  //       stool_recieved_date,
+  //       speciement_condition,
+  //       type,
+  //       user_id,
+  //       completed: "false"
+  //     });
   
-    } catch (error) {
-      // Log error and respond with error message
-      console.error('Error registering stool:', error.message);
-      res.status(500).json({
-        success: false,
-        message: 'An error occurred while registering the stool',
-        error: error.message
-      });
-    }
-  },
+  //     // Respond with the created entry
+  //     res.status(201).json({
+  //       success: true,
+  //       message: 'Lab stool entry created successfully',
+  //       data: labForm
+  //     });
+  
+  //   } catch (error) {
+  //     // Log error and respond with error message
+  //     console.error('Error registering stool:', error.message);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: 'An error occurred while registering the stool',
+  //       error: error.message
+  //     });
+  //   }
+  // },
 
   updateMessageStatus: async (req, res) => {
     try {
@@ -505,7 +549,6 @@ user_id,
       res.status(500).json({ error: 'Error creating data' });
     }
   },
-  
   StoolSpeciement: async (req, res) => {
     const {
       epid_number,
@@ -515,37 +558,62 @@ user_id,
       date_stool_2_sent_lab,
       site_of_paralysis,
       user_id
-
     } = req.body;
+    
     console.log(req.body);
-
+  
     try {
-
-      const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
-      console.log(message);
-      if (!message) {
-        return res.status(404).json({ error: 'Message not found' });
+      // Find the patient record by epid_number
+      const patientRecord = await patientdemModel.findOne({ where: { epid_number: epid_number } });
+      
+      if (!patientRecord) {
+        return res.status(404).json({ error: 'Patient not found' });
       }
   
-      message.progressNo = '3';
-      message.save();
+      // Update the progress number in the patient record
 
-      const stool1Doc = new stoolspecimanModel({
-        epid_number,
-        date_stool_1_collected,
-        date_stool_2_collected,
-        date_stool_1_sent_lab,
-        date_stool_2_sent_lab,
-        site_of_paralysis,
-        user_id
-      });
-      stool1Doc.save();
-      res.status(201).json(stool1Doc);
+  
+      // Check if a record with the same epid_number exists in stoolspecimanModel
+      let stoolRecord = await stoolspecimanModel.findOne({ where: { epid_number: epid_number } });
+  
+      if (stoolRecord) {
+        // If record exists, update it
+        stoolRecord.date_stool_1_collected = date_stool_1_collected;
+        stoolRecord.date_stool_2_collected = date_stool_2_collected;
+        stoolRecord.date_stool_1_sent_lab = date_stool_1_sent_lab;
+        stoolRecord.date_stool_2_sent_lab = date_stool_2_sent_lab;
+        stoolRecord.site_of_paralysis = site_of_paralysis;
+        stoolRecord.user_id = user_id;
+        patientRecord.progressNo = 'completed';
+
+        await stoolRecord.save();
+        await patientRecord.save();
+
+        res.status(200).json({ message: 'Record updated successfully', patientRecord });
+      } else {
+        // If record does not exist, create a new one
+        stoolRecord = new stoolspecimanModel({
+          epid_number,
+          date_stool_1_collected,
+          date_stool_2_collected,
+          date_stool_1_sent_lab,
+          date_stool_2_sent_lab,
+          site_of_paralysis,
+          user_id
+        });
+        patientRecord.progressNo = '13';
+        await patientRecord.save();
+        await stoolRecord.save();
+        res.status(201).json({ message: 'New record created successfully', stoolRecord });
+        // res.status(201).json(stoolRecord );
+
+      }
     } catch (error) {
-      console.error('Error creating data:', error);
-      res.status(500).json({ error: 'Error creating data ' });
+      console.error('Error processing request:', error);
+      res.status(500).json({ error: 'Error processing request' });
     }
   },
+  
   enviroment: async (req, res) => {
     const {
       epid_number,

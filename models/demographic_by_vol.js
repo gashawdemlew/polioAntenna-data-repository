@@ -40,6 +40,12 @@ const demographic = sequelize.define('demographic_by_vol', {
       viedeo_path: {
         type: DataTypes.STRING,
       },
+      phonNo: {
+        type: DataTypes.STRING,
+      },
+      gender: {
+        type: DataTypes.STRING,
+      },
     
   
 
