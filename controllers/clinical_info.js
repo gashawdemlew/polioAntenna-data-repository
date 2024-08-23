@@ -146,24 +146,24 @@ module.exports = {
 
   // Fetch all demographic records
    getAllVols: async (req, res) => {
-      try {
-          // Fetch records from the database using Sequelize
-          const vols = await demographiVolModel.findAll();
-  
-          const baseUrl = `${req.protocol}://${req.get('host')}`;
-          const volsWithUrls = vols.map(vol => ({
-              ...vol.dataValues,
-              image_url: vol.iamge_path ? `${baseUrl}/${vol.iamge_path.replace(/\\/g, '/')}` : null,
-              video_url: vol.viedeo_path ? `${baseUrl}/${vol.viedeo_path.replace(/\\/g, '/')}` : null
-          }));
-     
-          res.status(200).json(volsWithUrls);
-      } catch (error) {
-          console.error('Error fetching demographic records:', error);
-          res.status(500).json({ error: 'An error occurred while fetching the records' });
-      }
-  },
-  
+    try {
+        // Fetch records from the database using Sequelize
+        const vols = await demographiVolModel.findAll();
+
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const volsWithUrls = vols.map(vol => ({
+            ...vol.dataValues,
+            image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
+            video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
+        }));
+       
+        res.status(200).json(volsWithUrls);
+    } catch (error) {
+        console.error('Error fetching demographic records:', error);
+        res.status(500).json({ error: 'An error occurred while fetching the records' });
+    }
+},
+
 
 
 
