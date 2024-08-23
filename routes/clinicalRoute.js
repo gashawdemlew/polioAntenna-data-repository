@@ -7,6 +7,7 @@ const userController = require('../controllers/clinical_info'); // Updated path
 router.post('/post', userController.register,);
 router.post('/create', userController.uploadFiles, userController.create);
 router.post('/upload', userController.uploadFiles, userController.createVol);
+router.get('/records', userController.getAllVols);
 
 router.post('/prtientdemographi', userController.prtientdemographi);
 router.get('/demoByVolunter', userController.demoByVolunteer);

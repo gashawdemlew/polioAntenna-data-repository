@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const clinicRoute = require('./routes/clinicalRoute');
 const  userRoute = require('./routes/userRoute');
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use(cors());
 
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 
 async function checkDatabaseConnection() {
@@ -63,47 +65,17 @@ async function getLastEpidNumber() {
   }
 }
 
-app.get('/last-epid-number', async (req, res) => {
-  try {
-    const lastEpidNumber = await getLastEpidNumber();
-    res.json({ lastEpidNumber });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch last epid_number' });
-  }
-});
 
 
 
-app.get('/regions', async (req, res) => {
-  try {
-    const regions = await Region.findAll();
-    res.json(regions);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch regions' });
-  }
-});
+
+
 
 // Get zones by regionId
-app.get('/zones/:regionId', async (req, res) => {
-  const { regionId } = req.params;
-  try {
-    const zones = await Zone.findAll({ where: { region_id: regionId } });
-    res.json(zones);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch zones' });
-  }
-});
+
 
 // Get weredas by zoneId
-app.get('/weredas/:zoneId', async (req, res) => {
-  const { zoneId } = req.params;
-  try {
-    const weredas = await Wereda.findAll({ where: { zone_id: zoneId } });
-    res.json(weredas);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch weredas' });
-  }
-});
+
 
 checkDatabaseConnection();
 // Routes

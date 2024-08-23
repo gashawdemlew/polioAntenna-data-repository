@@ -124,12 +124,12 @@ module.exports = {
   
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
-        multimediaData.image_path = filePath;
+        multimediaData.iamge_path = filePath;
       }
   
       if (req.files && req.files.video) {
         const { path: filePath } = req.files.video[0];
-        multimediaData.video_path = filePath;
+        multimediaData.viedeo_path = filePath;
       }
   
       const multimediaDoc = new demographiVolModel(multimediaData);
@@ -143,7 +143,28 @@ module.exports = {
       res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
   },
+
+  // Fetch all demographic records
+   getAllVols: async (req, res) => {
+      try {
+          // Fetch records from the database using Sequelize
+          const vols = await demographiVolModel.findAll();
   
+          const baseUrl = `${req.protocol}://${req.get('host')}`;
+          const volsWithUrls = vols.map(vol => ({
+              ...vol.dataValues,
+              image_url: vol.iamge_path ? `${baseUrl}/${vol.iamge_path.replace(/\\/g, '/')}` : null,
+              video_url: vol.viedeo_path ? `${baseUrl}/${vol.viedeo_path.replace(/\\/g, '/')}` : null
+          }));
+     
+          res.status(200).json(volsWithUrls);
+      } catch (error) {
+          console.error('Error fetching demographic records:', error);
+          res.status(500).json({ error: 'An error occurred while fetching the records' });
+      }
+  },
+  
+
 
 
   uploadFiles: upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]),
@@ -375,41 +396,6 @@ module.exports = {
   },
   
   
-  // registerStool: async (req, res) => {
-  //   try {
-  //     // Validate request body
-  //     const { epid_number, stool_recieved_date, speciement_condition,user_id, type } = req.body;
-  //     if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
-  //       return res.status(400).json({ error: 'Missing required fields' });
-  //     }
-  
-  //     // Create new lab stool entry
-  //     const labForm = await labstoolModel.create({
-  //       epid_number,
-  //       stool_recieved_date,
-  //       speciement_condition,
-  //       type,
-  //       user_id,
-  //       completed: "false"
-  //     });
-  
-  //     // Respond with the created entry
-  //     res.status(201).json({
-  //       success: true,
-  //       message: 'Lab stool entry created successfully',
-  //       data: labForm
-  //     });
-  
-  //   } catch (error) {
-  //     // Log error and respond with error message
-  //     console.error('Error registering stool:', error.message);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: 'An error occurred while registering the stool',
-  //       error: error.message
-  //     });
-  //   }
-  // },
 
   updateMessageStatus: async (req, res) => {
     try {
@@ -513,11 +499,7 @@ user_id,
     } = req.body;
     console.log(req.body);
     try {
-      // const epid_number = await generateEpidNumber();
-      // const currentDate = new Date().toLocaleDateString();
-      // const completeEpidNumber = `${region}-${zone}-${woreda}-${currentDate}-${epid_number}`;
-
-      // const { epid_number } = req.body;
+    
   
    
   
