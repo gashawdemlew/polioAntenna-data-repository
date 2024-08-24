@@ -706,6 +706,8 @@ user_id,
       const existingUsers = await User.findAll({
         attributes: ['woreda', 'region', 'zone'],
         group: ['woreda', 'region', 'zone'],
+        where: { user_role: 'Health Officer' }, // Filter by role
+
         raw: true, // Use raw: true to get plain objects
       });
   
