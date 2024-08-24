@@ -702,67 +702,67 @@ user_id,
     console.log(req.query);
   
     try {
-      // Retrieve unique combinations of woreda, region, and zone
+      // Retrieve unique combinations of woreda, region, and zone for "health officer" role
       const existingUsers = await User.findAll({
         attributes: ['woreda', 'region', 'zone'],
-        group: ['woreda', 'region', 'zone'],
         where: { user_role: 'Health Officer' }, // Filter by role
-
+        group: ['woreda', 'region', 'zone'],
         raw: true, // Use raw: true to get plain objects
       });
   
-      let query = {};
+      let query = { user_role: 'Health Officer' }; // Ensure role is always part of the query
   
       // Priority 1: All three match
       if (woreda && region && zone) {
-        const match = existingUsers.find(user => 
+        const match = existingUsers.find(user =>
           user.woreda === woreda && user.region === region && user.zone === zone
         );
-        if (match) query = { woreda, region, zone };
+        if (match) query = { ...query, woreda, region, zone };
       }
   
       // Priority 2: Two match
-      if (!Object.keys(query).length) {
+      if (!Object.keys(query).length || Object.keys(query).length === 1) {
         if (woreda && zone) {
-          const match = existingUsers.find(user => 
+          const match = existingUsers.find(user =>
             user.woreda === woreda && user.zone === zone
           );
-          if (match) query = { woreda, zone };
+          if (match) query = { ...query, woreda, zone };
         }
   
-        if (!Object.keys(query).length && region && zone) {
-          const match = existingUsers.find(user => 
+        if (!Object.keys(query).length || Object.keys(query).length === 1 && region && zone) {
+          const match = existingUsers.find(user =>
             user.region === region && user.zone === zone
           );
-          if (match) query = { region, zone };
+          if (match) query = { ...query, region, zone };
         }
   
-        if (!Object.keys(query).length && woreda && region) {
-          const match = existingUsers.find(user => 
+        if (!Object.keys(query).length || Object.keys(query).length === 1 && woreda && region) {
+          const match = existingUsers.find(user =>
             user.woreda === woreda && user.region === region
           );
-          if (match) query = { woreda, region };
+          if (match) query = { ...query, woreda, region };
         }
       }
   
       // Priority 3: One match
-      if (!Object.keys(query).length) {
+      if (!Object.keys(query).length || Object.keys(query).length === 1) {
         if (woreda) {
           const match = existingUsers.find(user => user.woreda === woreda);
-          if (match) query = { woreda };
+          if (match) query = { ...query, woreda };
         }
   
-        if (!Object.keys(query).length && region) {
+        if (!Object.keys(query).length || Object.keys(query).length === 1 && region) {
           const match = existingUsers.find(user => user.region === region);
-          if (match) query = { region };
+          if (match) query = { ...query, region };
         }
   
-        if (!Object.keys(query).length && zone) {
+        if (!Object.keys(query).length || Object.keys(query).length === 1 && zone) {
           const match = existingUsers.find(user => user.zone === zone);
-          if (match) query = { zone };
+          if (match) query = { ...query, zone };
         }
       }
   
+      // Fetch filtered users
       const users = await User.findAll({
         where: query,
       });
