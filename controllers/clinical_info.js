@@ -65,12 +65,12 @@ module.exports = {
   
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
-        multimediaData.image_path = filePath;
+        multimediaData.iamge_path = filePath;
       }
   
       if (req.files && req.files.video) {
         const { path: filePath } = req.files.video[0];
-        multimediaData.video_path = filePath;
+        multimediaData.viedeo_path = filePath;
       }
   
       const multimediaDoc = new multimediaModel(multimediaData);
@@ -118,7 +118,7 @@ module.exports = {
       const multimediaData = {
         first_name,
         last_name,
-        hofficer_name,
+        selected_health_officcer:hofficer_name,
         region,woreda,zone,lat,long,gender,phonNo,
       };
   
@@ -148,9 +148,23 @@ module.exports = {
    getAllVols: async (req, res) => {
     try {
         // Fetch records from the database using Sequelize
-        const vols = await demographiVolModel.findAll();
+        // const vols = await demographiVolModel.findAll();
 
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const { phonNo } = req.query;
+
+            // Check if the phonNo query parameter is provided
+            if (!phonNo) {
+                return res.status(400).json({ error: "phonNo query parameter is required" });
+            }
+    
+            // Fetch records from the database by phonNo
+            const vols = await demographiVolModel.findAll({
+                where: {
+                  selected_health_officcer: phonNo
+                }
+            });
+
+        const baseUrl = `${req.protocol}s://${req.get('host')}`;
         const volsWithUrls = vols.map(vol => ({
             ...vol.dataValues,
             image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
@@ -178,22 +192,22 @@ module.exports = {
         res.status(500).json({ error: 'Failed to retrieve messages' });
       });
   },
-  // getData: (req, res) => {
-  //   labstoolModel.findAll()
-  //     .then((messages) => {
-  //       res.json(messages);
-  //     })
-  //     .catch((error) => {
-  //       res.status(500).json({ error: 'Failed to retrieve messages' });
-  //     });
-  // },
+  getData1: (req, res) => {
+    labstoolModel.findAll()
+      .then((messages) => {
+        res.json(messages);
+      })
+      .catch((error) => {
+        res.status(500).json({ error: 'Failed to retrieve messages' });
+      });
+  },
   getData: async (req, res) => {
-    // const { user_id } = req.params;
+    const { user_id } = req.params;
   
     try {
       const data = await labstoolModel.findAll({
         where: {
-          // user_id: user_id,
+          user_id: user_id,
           completed: {
             [Op.ne]: 'true'
           }
@@ -280,10 +294,7 @@ module.exports = {
   },
 
   deletData: (req, res) => {
-    clinicalModel.destroy({
-      where: {},
-      truncate: true
-    })
+    labstoolModel.destroy()
     .then((rowsDeleted) => {
       res.json({ message: `${rowsDeleted} records deleted` });
     })
@@ -291,84 +302,102 @@ module.exports = {
       res.status(500).json({ error: 'Failed to delete records' });
     });
   },
-
   register: async (req, res) => {
+    const { 
+      epid_number, 
+      true_afp, 
+      user_id,
+      final_cell_culture_result, 
+      date_cell_culture_result, 
+      final_combined_itd_result, 
+      type 
+    } = req.body;
+  
     try {
-      const {
-        epid_number,
-        true_afp,
-        final_cell_culture_result,
-        date_cell_culture_result,
-        final_combined_itd_result,
-      } = req.body;
-      const message = await labstoolModel.findOne({ where: { epid_number: epid_number } });
-      console.log(message);
+      // Find the related message for the given epid_number and type
+      const message = await labstoolModel.findOne({
+        where: { epid_number, type: "Stool 1" }
+      });
+  
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
   
       message.completed = 'true';
-      message.save();
-      const newLabInfo = await demographiVolModel.create({
-        epid_number,
-        true_afp,
-        final_cell_culture_result,
-        date_cell_culture_result,
-        final_combined_itd_result,
+  
+      // Find existing record
+      let existingRecord = await labratoryModel.findOne({
+        where: { epid_number, type }
       });
-  console.log(newLabInfo);
-      res.status(201).json(newLabInfo);
-    } catch (error) {
-      console.error('Error creating lab info:', error);
-      res.status(500).json({ error: 'Error creating lab info' });
-    }
-  },
+  
+      // Update or create lab record
+      if (existingRecord) {
+        // Update fields of the existing record
+        existingRecord.true_afp = true_afp;
+        existingRecord.final_cell_culture_result = final_cell_culture_result;
+        existingRecord.date_cell_culture_result = date_cell_culture_result;
+        existingRecord.final_combined_itd_result = final_combined_itd_result;
+        existingRecord.user_id = user_id;
 
-
-  register: async (req, res) => {
-    try {
-      const {
-        epid_number,
-        true_afp,
-        final_cell_culture_result,
-        date_cell_culture_result,
-        final_combined_itd_result,
-      } = req.body;
-      const message = await labstoolModel.findOne({ where: { epid_number: epid_number } });
-      console.log(message);
-      if (!message) {
-        return res.status(404).json({ error: 'Message not found' });
+      } else {
+        // Create a new record
+        existingRecord = labratoryModel.build({
+          epid_number,
+          true_afp,
+          final_cell_culture_result,
+          date_cell_culture_result,
+          final_combined_itd_result,
+          user_id,
+        });
       }
   
-      message.completed = 'true';
-      message.save();
-      const newLabInfo = await labratoryModel.create({
-        epid_number,
-        true_afp,
-        final_cell_culture_result,
-        date_cell_culture_result,
-        final_combined_itd_result,
-      });
+      // Save both the lab record and message in parallel
+      await Promise.all([existingRecord.save(), message.save()]);
   
-      res.status(201).json(newLabInfo);
+      const responseMessage = existingRecord.isNewRecord 
+        ? 'Lab record created successfully' 
+        : 'Lab record updated successfully';
+  
+      return res.status(200).json({
+        message: responseMessage,
+        data: existingRecord
+      });
+      
     } catch (error) {
-      console.error('Error creating lab info:', error);
-      res.status(500).json({ error: 'Error creating lab info' });
+      console.error('Error creating/updating lab info:', error);
+      return res.status(500).json({ error: 'An error occurred while processing the lab record.' });
     }
   },
+  
+  
   registerStool: async (req, res) => {
+    const { epid_number, stool_recieved_date, completed, speciement_condition, user_id, type } = req.body;
+  console.log( req.body);
     try {
-      // Validate request body
-      const { epid_number, stool_recieved_date, speciement_condition, user_id, type } = req.body;
-      // if (!epid_number || !stool_recieved_date || !speciement_condition || !type) {
-      //   return res.status(400).json({ error: 'Missing required fields' });
-      // }
+      // Check if a record already exists based on epid_number and type
+      let existingRecord = await labstoolModel.findOne({
+        where: { epid_number, type }
+      });
   
-      // Determine the value of completed based on type
-      const completed = type === "Stool 1" ? "false" :"true";
+      if (existingRecord) {
+        // Update the existing record if found
+        existingRecord.stool_recieved_date = stool_recieved_date;
+        existingRecord.speciement_condition = speciement_condition;
+        existingRecord.user_id = user_id;
+        existingRecord.completed = completed;
+        
+        // Save updated record
+        await existingRecord.save();
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Lab stool entry updated successfully',
+          data: existingRecord
+        });
+      }
   
-      // Create new lab stool entry
-      const labForm = await labstoolModel.create({
+      // Create a new record if no existing record is found
+      const newLabForm = await labstoolModel.create({
         epid_number,
         stool_recieved_date,
         speciement_condition,
@@ -378,16 +407,16 @@ module.exports = {
       });
   
       // Respond with the created entry
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Lab stool entry created successfully',
-        data: labForm
+        data: newLabForm
       });
   
     } catch (error) {
-      // Log error and respond with error message
+      // Log the error and respond with an error message
       console.error('Error registering stool:', error.message);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'An error occurred while registering the stool',
         error: error.message
@@ -396,17 +425,18 @@ module.exports = {
   },
   
   
+  
 
   updateMessageStatus: async (req, res) => {
     try {
       console.log('Request params:', req.params); // Log the request parameters
-      const { push_id } = req.params;
+      const { id } = req.params;
   
-      if (!push_id) {
-        return res.status(400).json({ error: 'push_id parameter is required' });
+      if (!id) {
+        return res.status(400).json({ error: 'id parameter is required' });
       }
   
-      const message = await pushMessageModel.findOne({ where: { push_id: push_id } });
+      const message = await demographiVolModel.findOne({ where: { id: id } });
   
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });

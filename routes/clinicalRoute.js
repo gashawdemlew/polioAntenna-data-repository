@@ -21,7 +21,10 @@ router.post('/enviroment', userController.enviroment);
 router.post('/labstoolDoc', userController.labstoolDoc);
 router.post('/followup', userController.followup);
 router.delete('/deletData', userController.deletData);
-router.get('/getData', userController.getData);
+router.get('/getData/:user_id', userController.getData);
+router.get('/getData1', userController.getData1);
+
+
 router.get('/getDataByUserId/:user_id', userController.getDataByUserId);
 router.delete('/deleteDataById/:petient_id', userController.deleteDataById);
 
@@ -43,7 +46,7 @@ router.delete('/deleteDataById/:petient_id', userController.deleteDataById);
 
 
 router.get('/getMessage676', userController.getMessages);
-router.put('/messages23/:push_id', userController.updateMessageStatus);
+router.put('/messages23/:id', userController.updateMessageStatus);
 
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
+const sequelize = require('../config/database'); 
 
-const LabratoryInfo = sequelize.define('labaratory_info', {
+const LabratoryInfo = sequelize.define('labaratory_info1', {
   lab_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -9,16 +9,16 @@ const LabratoryInfo = sequelize.define('labaratory_info', {
   },
   epid_number: {
     type: DataTypes.STRING,
-    unique: true,
+
+  },
+  type: {
+    type: DataTypes.STRING,
+
   },
 
-  epid_number: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
   true_afp: {
     type: DataTypes.STRING,
-    unique: true,
+   
   },
   final_cell_culture_result: {
     type: DataTypes.STRING,

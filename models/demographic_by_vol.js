@@ -10,7 +10,7 @@ const demographic = sequelize.define('demographic_by_vol', {
 
       epid_number: {
         type: DataTypes.STRING,
-        unique: true,
+        // unique: true,
       },
       first_name: {
         type: DataTypes.STRING,
@@ -47,7 +47,11 @@ const demographic = sequelize.define('demographic_by_vol', {
         type: DataTypes.STRING,
       },
     
-  
+      status: {
+        type: DataTypes.STRING,
+        defaultValue:'unseen'
+      },
+    
 
       selected_health_officcer: {
         type: DataTypes.STRING,
