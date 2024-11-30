@@ -193,7 +193,7 @@ module.exports = {
       });
   },
   getData1: (req, res) => {
-    labstoolModel.findAll()
+    patientdemModel.findAll()
       .then((messages) => {
         res.json(messages);
       })
@@ -471,7 +471,10 @@ module.exports = {
     try {
       const epid_number = await generateEpidNumber();
       const currentDate = new Date().toLocaleDateString();
-      const completeEpidNumber = `${region}-${zone}-${woreda}-${currentDate}-${epid_number}`;
+      const regionCode = region.slice(0, 2).toUpperCase();
+      const zoneCode = zone.slice(0, 2).toUpperCase();
+      const woredaCode = woreda.slice(0, 2).toUpperCase();
+      const completeEpidNumber = `${regionCode}-${zoneCode}-${woredaCode}-${currentDate}-${epid_number}`;
       const patientDoc = new patientdemModel({
         lat:latitude,
         long:longitude,
@@ -830,7 +833,10 @@ user_id,
   
       const epid_number = await generateEpidNumber();
       const currentDate = new Date().toLocaleDateString();
-      const completeEpidNumber = `${region}-${zone}-${woreda}-${currentDate}-${epid_number}`;
+      const regionCode = region.slice(0, 2).toUpperCase();
+      const zoneCode = zone.slice(0, 2).toUpperCase();
+      const woredaCode = woreda.slice(0, 2).toUpperCase();
+      const completeEpidNumber = `${regionCode}-${zoneCode}-${woredaCode}-${currentDate}-${epid_number}`;
       const pushMessage = new pushMessageModel({
         epid_number: completeEpidNumber,
         first_name,
@@ -850,6 +856,69 @@ user_id,
       res.status(500).json({ error: 'Error creating data ' });
     }
   },
+  getDataByEpidNumber: async (req, res) => {
+    const { epid_number } = req.params;
+    console.log(`Received EPID Number: ${epid_number}`);
+
+    if (!epid_number) {
+      return res.status(400).json({ error: 'epid_number is required' });
+    }
+  
+    try {
+      const models = [
+        { name: 'Clinical History', model: clinicalModel },
+        { name: 'Demographic Voluntary', model: demographiVolModel },
+        { name: 'Follow-up Investigation', model: followupModel },
+        { name: 'Lab Stool Info', model: labstoolModel },
+        { name: 'Laboratory Info', model: labratoryModel },
+        { name: 'Multimedia Info', model: multimediaModel },
+        { name: 'Patient Demography', model: patientdemModel },
+        { name: 'Stool Specimen Info', model: stoolspecimanModel },
+      ];
+  
+      // Execute all model queries in parallel
+      const results = await Promise.all(
+        models.map(async ({ name, model }) => {
+          try {
+            const data = await model.findOne({ where: { epid_number } });
+            return { name, data };
+          } catch (err) {
+            console.error(`Error fetching data for model "${name}":`, err.message);
+            return { name, error: err.message };
+          }
+        })
+      );
+  
+      // Separate successful results and errors
+      const responseData = results.reduce(
+        (acc, { name, data, error }) => {
+          if (error) {
+            acc.errors.push({ model: name, message: error });
+          } else if (data) {
+            acc.results[name] = data;
+          } else {
+            acc.results[name] = null; // Explicitly add null for clarity
+          }
+          return acc;
+        },
+        { results: {}, errors: [] }
+      );
+  
+      // Send final response
+      res.status(200).json({
+        epid_number,
+        results: responseData.results,
+        errors: responseData.errors.length > 0 ? responseData.errors : null,
+      });
+    } catch (globalError) {
+      console.error('Critical error occurred while fetching data:', globalError.message);
+      res.status(500).json({
+        error: 'An unexpected error occurred',
+        details: globalError.message,
+      });
+    }
+  }
+  
 };
 
 

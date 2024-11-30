@@ -4,7 +4,6 @@ const path = require('path');
 
 const clinicRoute = require('./routes/clinicalRoute');
 const  userRoute = require('./routes/userRoute');
-const { Region, Zone, Wereda } = require('./models');
 const clinicalModel = require('./models/clinicalHistoryModel');
 
 
@@ -55,27 +54,6 @@ async function initialize() {
 }
 
 initialize();
-async function getLastEpidNumber() {
-  try {
-    const lastEpidNumber = await clinicalModel.max('epid_number');
-    return lastEpidNumber;
-  } catch (error) {
-    console.error('Error fetching last epid_number:', error);
-    throw error;
-  }
-}
-
-
-
-
-
-
-
-// Get zones by regionId
-
-
-// Get weredas by zoneId
-
 
 checkDatabaseConnection();
 // Routes

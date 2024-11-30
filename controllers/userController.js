@@ -69,38 +69,7 @@ console.log(req.body);
       });
       }
 
-      // user_id: {
-      //   type: DataTypes.INTEGER,
-      //   primaryKey: true,
-      //   autoIncrement: true,
-      // },
-      // first_name: {
-      //   type: DataTypes.STRING,
-      // },
-      // last_name: {
-      //   type: DataTypes.STRING,
-      // },
-      // phoneNo: {
-      //   type: DataTypes.STRING,
-      // },
-      // zone: {
-      //   type: DataTypes.STRING,
-      // },
-      // woreda: {
-      //   type: DataTypes.STRING,
-      // },
-      // lat: {
-      //   type: DataTypes.STRING,
-      // },
-      // long: {
-      //   type: DataTypes.STRING,
-      // },
-      // user_role: {
-      //   type: DataTypes.STRING,
-      // },
-      // password: {
-      //   type: DataTypes.STRING,
-      // },
+ 
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
@@ -116,6 +85,32 @@ console.log(req.body);
         res.status(500).json({ error: 'Failed to retrieve user' });
       });
   },
+
+  getUserByPhoNno: (req, res) => {
+    const { phoneNo } = req.body; // Extract phone number from request body
+
+    console.log(phoneNo)
+  
+    // Validate that phone number is provided
+    if (!phoneNo) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+  
+    // Find the user by phone number
+    User.findOne({ where: { phoneNo } }) // Assuming phoneNo is a unique field
+      .then((student) => {
+        if (student) {
+          // Return the password (consider security implications)
+          res.json({ password: student.password });
+        } else {
+          res.status(404).json({ error: 'Student not found' });
+        }
+      })
+      .catch((error) => {
+        res.status(500).json({ error: 'Failed to retrieve student' });
+      });
+  },
+
 
   getStudentById: (req, res) => {
     const id = req.params.id;
