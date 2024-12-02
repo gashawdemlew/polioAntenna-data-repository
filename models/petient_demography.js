@@ -55,6 +55,13 @@ const User = sequelize.define('petient_demography', {
     type: DataTypes.STRING,
 
   },
+  result: {
+    type: DataTypes.STRING,
+    defaultValue:"pending"
+
+  },
+
+
 });
 
 async function syncModels() {

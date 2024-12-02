@@ -62,6 +62,8 @@ console.log(req.body);
 
         region:user.region,
         emergency_phonno:user.emergency_phonno,
+        status:user.status,
+
    
 
       
@@ -128,35 +130,67 @@ console.log(req.body);
   },
 
 // Assuming you're using Sequelize for ORM
- updateUser :(req, res) => {
+updateUser: async (req, res) => {
   const id = req.params.id;
-  const { first_name, last_name, phoneNo, zone, woreda, region, password } = req.body;
+  const { first_name, last_name, phoneNo, zone, woreda, region, password, status } = req.body;
 
-  // Ensure the user exists before trying to update
-  User.findByPk(id)
-    .then(user => {
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+  try {
+    // Fetch the user by ID
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-      // Update user details
-      return user.update({
-        first_name,
-        last_name,
-        phoneNo,
-        zone,
-        woreda,
-        region,
-        password // Consider hashing the password before storing it
-      });
-    })
-    .then(() => {
-      res.json({ message: 'User updated successfully' });
-    })
-    .catch((error) => {
-      console.error(error); // Log the error for debugging
-      res.status(500).json({ error: 'Failed to update user' });
+    // Update user details only with the fields provided in req.body
+    await user.update({
+      first_name: first_name || user.first_name,
+      last_name: last_name || user.last_name,
+      phoneNo: phoneNo || user.phoneNo,
+      zone: zone || user.zone,
+      woreda: woreda || user.woreda,
+      region: region || user.region,
+      status: status || user.status,
+      password: password || user.password // Ensure password is hashed
     });
+
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+},
+updateUserPhoNo: async (req, res) => {
+  const { phoneNo, first_name, last_name, zone, woreda, region, password, status } = req.body;
+
+  try {
+    // Ensure phoneNo is provided
+    if (!phoneNo) {
+      return res.status(400).json({ error: 'phoneNo is required to update the user' });
+    }
+
+    // Fetch the user by phoneNo
+    const user = await User.findOne({ where: { phoneNo } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found with the provided phoneNo' });
+    }
+
+    // Update user details only with the fields provided in req.body
+    await user.update({
+      first_name: first_name || user.first_name,
+      last_name: last_name || user.last_name,
+      phoneNo: phoneNo || user.phoneNo, // Optional, but you may omit updating phoneNo itself
+      zone: zone || user.zone,
+      woreda: woreda || user.woreda,
+      region: region || user.region,
+      status: status || user.status,
+      password: password ? hashPassword(password) : user.password // Ensure password is hashed
+    });
+
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: 'Failed to update user' });
+  }
 },
 
 

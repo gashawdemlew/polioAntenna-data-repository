@@ -24,9 +24,13 @@ router.delete('/deletData', userController.deletData);
 router.get('/getData/:user_id', userController.getData);
 router.get('/getData1', userController.getData1);
 router.get('/getDataByEpidNumber/:epid_number(*)', userController.getDataByEpidNumber);
+router.put('/updateCommiteResult/:id(*)', userController.updateCommiteResult);
+
 
 
 router.get('/getDataByUserId/:user_id', userController.getDataByUserId);
+router.get('/getCommitte', userController.getCommite);
+
 router.delete('/deleteDataById/:petient_id', userController.deleteDataById);
 
 

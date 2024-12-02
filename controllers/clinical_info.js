@@ -10,6 +10,8 @@ const pushMessageModel = require('../models/push_message_labspec');
 const stoolspecimanModel = require('../models/stool_speciement_info');
 const progress = require('../models/progress');
 const User = require('../models/userModel');
+const Committe = require('../models/commite_ressult');
+
 
 const { Op } = require('sequelize');
 
@@ -185,6 +187,17 @@ module.exports = {
 
   getMessages: (req, res) => {
     pushMessageModel.findAll()
+      .then((messages) => {
+        res.json(messages);
+      })
+      .catch((error) => {
+        res.status(500).json({ error: 'Failed to retrieve messages' });
+      });
+  },
+
+
+  getCommite: (req, res) => {
+    Committe.findAll()
       .then((messages) => {
         res.json(messages);
       })
@@ -425,7 +438,49 @@ module.exports = {
   },
   
   
+  updateCommiteResult: async (req, res) => {
+    try {
+      console.log('Request params:', req.params); // Log the request parameters
+      const { id } = req.params;
+      const { phone_no, full_name,description,result, user_id } = req.body; // Extract fields from the request body
   
+      if (!id) {
+        return res.status(400).json({ error: 'id parameter is required' });
+      }
+  
+      const message = await Committe.findOne({ where: { epid_number: id } });
+
+      const message1 = await patientdemModel.findOne({ where: { epid_number: id } });
+
+  
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+  
+      // Update fields if provided
+      if (phone_no) message.phone_no = phone_no;
+      if (full_name) message.full_name = full_name;
+      if (result) 
+        message.result = result;
+      message1.result = result;
+
+
+      if (user_id) message.user_id = user_id;
+      if (description) 
+        message.description = description;
+
+  
+      await message.save();
+      await message1.save();
+
+     
+      res.json({ message: 'Message updated successfully', data: message });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while updating the message' });
+    }
+  },
+
 
   updateMessageStatus: async (req, res) => {
     try {
@@ -490,6 +545,10 @@ module.exports = {
         user_id,
         progressNo:"1",
       });
+      const commite = new Committe({
+        epid_number: completeEpidNumber,
+      });
+
 
      console.log(req.body);
       const progresss = new progress({
@@ -503,9 +562,12 @@ module.exports = {
       await Promise.all([
         patientDoc.save(),
         progresss.save(),
+        commite.save(),
       ]);
 
-      res.status(201).json(patientDoc);
+      res.status(201).json(commite);
+      console.error(' info:', commite);
+
     } catch (error) {
       console.error(' info:', error);
       res.status(500).json({ error: 'Error creating lab info' });

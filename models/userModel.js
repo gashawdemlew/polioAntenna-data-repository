@@ -45,6 +45,12 @@ const User = sequelize.define('usertable', {
     
   },
 
+  status: {
+    type: DataTypes.STRING,
+  defaultValue:"Active"
+    
+  },
+
   
 });
 

@@ -12,6 +12,7 @@ router.post('/login', userController.Login);
 
 router.get('/getAllUser', userController.getAllUser);
 router.post('/getUserByPhoNno', userController.getUserByPhoNno);
+router.put('/updateUserPhoNo', userController.updateUserPhoNo);
 
 router.get('/:id', userController.getStudentById);
 router.put('/:id', userController.updateUser);
