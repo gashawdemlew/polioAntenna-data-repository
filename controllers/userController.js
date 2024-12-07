@@ -183,7 +183,7 @@ updateUserPhoNo: async (req, res) => {
       woreda: woreda || user.woreda,
       region: region || user.region,
       status: status || user.status,
-      password: password ? hashPassword(password) : user.password // Ensure password is hashed
+      password: password || user.password // Ensure password is hashed
     });
 
     res.json({ message: 'User updated successfully' });

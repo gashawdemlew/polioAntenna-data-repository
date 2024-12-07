@@ -62,6 +62,8 @@ module.exports = {
     }
   
     try {
+
+      
       // Handle file uploads
       const multimediaData = { epid_number };
   
@@ -181,6 +183,40 @@ module.exports = {
 },
 
 
+
+
+GetAllMultimedia: async (req, res) => {
+  try {
+      // Fetch records from the database using Sequelize
+      // const vols = await demographiVolModel.findAll();
+
+      const { epid_number } = req.query;
+
+          // Check if the phonNo query parameter is provided
+          if (!epid_number) {
+              return res.status(400).json({ error: "epid_number query parameter is required" });
+          }
+  
+          // Fetch records from the database by phonNo
+          const vols = await multimediaModel.findAll({
+              where: {
+                epid_number: epid_number
+              }
+          });
+
+      const baseUrl = `${req.protocol}s://${req.get('host')}`;
+      const volsWithUrls = vols.map(vol => ({
+          ...vol.dataValues,
+          image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
+          video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
+      }));
+     
+      res.status(200).json(volsWithUrls);
+  } catch (error) {
+      console.error('Error fetching demographic records:', error);
+      res.status(500).json({ error: 'An error occurred while fetching the records' });
+  }
+},
 
 
   uploadFiles: upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]),

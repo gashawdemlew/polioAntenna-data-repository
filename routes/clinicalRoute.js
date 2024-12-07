@@ -9,6 +9,9 @@ router.post('/create', userController.uploadFiles, userController.create);
 router.post('/upload', userController.uploadFiles, userController.createVol);
 router.get('/records', userController.getAllVols);
 
+router.get('/getAllMultimedia(*)', userController.GetAllMultimedia);
+
+
 router.post('/prtientdemographi', userController.prtientdemographi);
 router.get('/demoByVolunter', userController.demoByVolunteer);
 // router.get('/demoByVolunter', userController.demoByVolunteer);
