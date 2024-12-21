@@ -75,6 +75,10 @@ module.exports = {
       if (req.files && req.files.video) {
         const { path: filePath } = req.files.video[0];
         multimediaData.viedeo_path = filePath;
+        console.log(filePath);
+        console.log(        req.files.video
+        );
+
       }
   
       const multimediaDoc = new multimediaModel(multimediaData);
@@ -574,7 +578,7 @@ GetAllMultimedia: async (req, res) => {
         phoneNo,
         last_name,
         gender,
-        dateofbirth,
+        birth_of_place:dateofbirth,
         region,
         zone,
         woreda,
@@ -954,6 +958,8 @@ user_id,
       res.status(500).json({ error: 'Error creating data ' });
     }
   },
+
+
   getDataByEpidNumber: async (req, res) => {
     const { epid_number } = req.params;
     console.log(`Received EPID Number: ${epid_number}`);
@@ -979,6 +985,80 @@ user_id,
         models.map(async ({ name, model }) => {
           try {
             const data = await model.findOne({ where: { epid_number } });
+            return { name, data };
+          } catch (err) {
+            console.error(`Error fetching data for model "${name}":`, err.message);
+            return { name, error: err.message };
+          }
+        })
+      );
+  
+      // Separate successful results and errors
+      const responseData = results.reduce(
+        (acc, { name, data, error }) => {
+          if (error) {
+            acc.errors.push({ model: name, message: error });
+          } else if (data) {
+            acc.results[name] = data;
+          } else {
+            acc.results[name] = null; // Explicitly add null for clarity
+          }
+          return acc;
+        },
+        { results: {}, errors: [] }
+      );
+  
+      // Send final response
+      res.status(200).json({
+        epid_number,
+        results: responseData.results,
+        errors: responseData.errors.length > 0 ? responseData.errors : null,
+      });
+    } catch (globalError) {
+      console.error('Critical error occurred while fetching data:', globalError.message);
+      res.status(500).json({
+        error: 'An unexpected error occurred',
+        details: globalError.message,
+      });
+    }
+  },
+
+  
+  getDataFormodels: async (req, res) => {
+    const { epid_number } = req.params;
+    console.log(`Received EPID Number: ${epid_number}`);
+  
+    if (!epid_number) {
+      return res.status(400).json({ error: 'epid_number is required' });
+    }
+  
+    try {
+      const models = [
+        {
+          name: 'Clinical History',
+          model: clinicalModel,
+          attributes: ['total_opv_doses'], // Fetch only this column
+        },
+        {
+          name: 'Environment Info',
+          model: environmentModel,
+          attributes: ['tempreture', 'rainfall', 'humidity'], // Fetch these columns
+        },
+      {
+          name: 'Patient Demography',
+          model: patientdemModel,
+          attributes: ['region', 'birth_of_place', 'gender'], // Fetch these columns
+        },
+      ];
+  
+      // Execute all model queries in parallel
+      const results = await Promise.all(
+        models.map(async ({ name, model, attributes }) => {
+          try {
+            const data = await model.findOne({
+              where: { epid_number },
+              attributes, // Include specific attributes
+            });
             return { name, data };
           } catch (err) {
             console.error(`Error fetching data for model "${name}":`, err.message);

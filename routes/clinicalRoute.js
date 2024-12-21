@@ -27,6 +27,8 @@ router.delete('/deletData', userController.deletData);
 router.get('/getData/:user_id', userController.getData);
 router.get('/getData1', userController.getData1);
 router.get('/getDataByEpidNumber/:epid_number(*)', userController.getDataByEpidNumber);
+router.get('/getDataFormodels/:epid_number(*)', userController.getDataFormodels);
+
 router.put('/updateCommiteResult/:id(*)', userController.updateCommiteResult);
 
 
