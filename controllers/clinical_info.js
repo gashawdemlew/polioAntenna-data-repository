@@ -56,39 +56,39 @@ module.exports = {
   create: async (req, res) => {
     const { hofficer_name, hofficer_phonno, epid_number } = req.body;
     console.log(req.body);
-  
+
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
-  
+
     try {
 
-      
+
       // Handle file uploads
       const multimediaData = { epid_number };
-  
+
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
         multimediaData.iamge_path = filePath;
       }
-  
+
       if (req.files && req.files.video) {
         const { path: filePath } = req.files.video[0];
         multimediaData.viedeo_path = filePath;
         console.log(filePath);
-        console.log(        req.files.video
+        console.log(req.files.video
         );
 
       }
-  
+
       const multimediaDoc = new multimediaModel(multimediaData);
-  
+
       const patient = await patientdemModel.findOne({ where: { epid_number } });
-  
+
       if (!patient) {
         return res.status(404).json({ error: 'Patient not found' });
       }
-  
+
       const pushMessage = new pushMessageModel({
         epid_number,
         first_name: patient.first_name,
@@ -100,50 +100,50 @@ module.exports = {
         woreda: patient.woreda,
         status: "unseen"
       });
-  
-      patient.progressNo = '12';
+
+      patient.progressNo = '13';
       await patient.save();
-  
+
       await Promise.all([
         multimediaDoc.save(),
         pushMessage.save(),
       ]);
-  
-      res.status(201).json(pushMessage );
-  console.log(`RRRRRRRRRR ${pushMessage}`)
+
+      res.status(201).json(pushMessage);
+      console.log(`RRRRRRRRRR ${pushMessage}`)
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
   },
-  
+
   createVol: async (req, res) => {
-    const { first_name, last_name,region,woreda,zone,gender,phonNo, hofficer_name,lat,long } = req.body;
+    const { first_name, last_name, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
     console.log(req.body);
-  
+
     try {
       // Handle file uploads
       const multimediaData = {
         first_name,
         last_name,
-        selected_health_officcer:hofficer_name,
-        region,woreda,zone,lat,long,gender,phonNo,
+        selected_health_officcer: hofficer_name,
+        region, woreda, zone, lat, long, gender, phonNo,
       };
-  
+
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
         multimediaData.iamge_path = filePath;
       }
-  
+
       if (req.files && req.files.video) {
         const { path: filePath } = req.files.video[0];
         multimediaData.viedeo_path = filePath;
       }
-  
+
       const multimediaDoc = new demographiVolModel(multimediaData);
-  
+
       await multimediaDoc.save();
-  
+
       res.status(201).json(multimediaDoc);
       console.log(`RRRRRRRRRR ${multimediaDoc}`);
     } catch (error) {
@@ -153,74 +153,74 @@ module.exports = {
   },
 
   // Fetch all demographic records
-   getAllVols: async (req, res) => {
+  getAllVols: async (req, res) => {
     try {
-        // Fetch records from the database using Sequelize
-        // const vols = await demographiVolModel.findAll();
+      // Fetch records from the database using Sequelize
+      // const vols = await demographiVolModel.findAll();
 
-        const { phonNo } = req.query;
+      const { phonNo } = req.query;
 
-            // Check if the phonNo query parameter is provided
-            if (!phonNo) {
-                return res.status(400).json({ error: "phonNo query parameter is required" });
-            }
-    
-            // Fetch records from the database by phonNo
-            const vols = await demographiVolModel.findAll({
-                where: {
-                  selected_health_officcer: phonNo
-                }
-            });
+      // Check if the phonNo query parameter is provided
+      if (!phonNo) {
+        return res.status(400).json({ error: "phonNo query parameter is required" });
+      }
 
-        const baseUrl = `${req.protocol}s://${req.get('host')}`;
-        const volsWithUrls = vols.map(vol => ({
-            ...vol.dataValues,
-            image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
-            video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
-        }));
-       
-        res.status(200).json(volsWithUrls);
+      // Fetch records from the database by phonNo
+      const vols = await demographiVolModel.findAll({
+        where: {
+          selected_health_officcer: phonNo
+        }
+      });
+
+      const baseUrl = `${req.protocol}s://${req.get('host')}`;
+      const volsWithUrls = vols.map(vol => ({
+        ...vol.dataValues,
+        image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
+        video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
+      }));
+
+      res.status(200).json(volsWithUrls);
     } catch (error) {
-        console.error('Error fetching demographic records:', error);
-        res.status(500).json({ error: 'An error occurred while fetching the records' });
+      console.error('Error fetching demographic records:', error);
+      res.status(500).json({ error: 'An error occurred while fetching the records' });
     }
-},
+  },
 
 
 
 
-GetAllMultimedia: async (req, res) => {
-  try {
+  GetAllMultimedia: async (req, res) => {
+    try {
       // Fetch records from the database using Sequelize
       // const vols = await demographiVolModel.findAll();
 
       const { epid_number } = req.query;
 
-          // Check if the phonNo query parameter is provided
-          if (!epid_number) {
-              return res.status(400).json({ error: "epid_number query parameter is required" });
-          }
-  
-          // Fetch records from the database by phonNo
-          const vols = await multimediaModel.findAll({
-              where: {
-                epid_number: epid_number
-              }
-          });
+      // Check if the phonNo query parameter is provided
+      if (!epid_number) {
+        return res.status(400).json({ error: "epid_number query parameter is required" });
+      }
+
+      // Fetch records from the database by phonNo
+      const vols = await multimediaModel.findAll({
+        where: {
+          epid_number: epid_number
+        }
+      });
 
       const baseUrl = `${req.protocol}s://${req.get('host')}`;
       const volsWithUrls = vols.map(vol => ({
-          ...vol.dataValues,
-          image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
-          video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
+        ...vol.dataValues,
+        image_url: vol.iamge_path ? `${baseUrl}/uploads/${path.basename(vol.iamge_path)}` : null,
+        video_url: vol.viedeo_path ? `${baseUrl}/uploads/${path.basename(vol.viedeo_path)}` : null
       }));
-     
+
       res.status(200).json(volsWithUrls);
-  } catch (error) {
+    } catch (error) {
       console.error('Error fetching demographic records:', error);
       res.status(500).json({ error: 'An error occurred while fetching the records' });
-  }
-},
+    }
+  },
 
 
   uploadFiles: upload.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]),
@@ -256,7 +256,7 @@ GetAllMultimedia: async (req, res) => {
   },
   getData: async (req, res) => {
     const { user_id } = req.params;
-  
+
     try {
       const data = await labstoolModel.findAll({
         where: {
@@ -266,56 +266,58 @@ GetAllMultimedia: async (req, res) => {
           }
         }
       });
-  
+
       res.json(data);
     } catch (error) {
       console.error('Error retrieving data:', error);
       res.status(500).json({ error: 'Failed to retrieve data' });
     }
   },
-  
 
-  
+
+
   getDataByUserId: async (req, res) => {
     const { user_id } = req.params;
-  
+
     try {
       const data = await patientdemModel.findAll({
         where: {
           user_id: user_id,
           progressNo: {
-            [Op.ne]: 'completed'
-          }
-        }
+            [Op.ne]: 'completed',
+          },
+        },
+        order: [['createdAt', 'DESC']], // Order by createdAt in descending order
       });
-  
+
       res.json(data);
     } catch (error) {
       console.error('Error retrieving data:', error);
       res.status(500).json({ error: 'Failed to retrieve data' });
     }
   },
-   deleteDataById: async (req, res) => {
+
+  deleteDataById: async (req, res) => {
     const { petient_id } = req.params;
-  
+
     try {
       const data = await patientdemModel.destroy({
         where: {
           petient_id: petient_id
         }
       });
-  
+
       if (data === 0) {
         return res.status(404).json({ error: 'No record found with this ID' });
       }
-  
+
       res.json({ message: 'Record deleted successfully' });
     } catch (error) {
       console.error('Error deleting record:', error);
       res.status(500).json({ error: 'Failed to delete record' });
     }
   },
-  
+
   getStoolData: async (req, res) => {
     try {
       const data = await labstoolModel.findAll();
@@ -328,7 +330,7 @@ GetAllMultimedia: async (req, res) => {
 
   getStoolByUserId: async (req, res) => {
     const { user_id } = req.params;
-  
+
     try {
       const data = await patientdemModel.findAll({
         where: {
@@ -338,7 +340,7 @@ GetAllMultimedia: async (req, res) => {
           }
         }
       });
-  
+
       res.json(data);
     } catch (error) {
       console.error('Error retrieving data:', error);
@@ -348,41 +350,41 @@ GetAllMultimedia: async (req, res) => {
 
   deletData: (req, res) => {
     labstoolModel.destroy()
-    .then((rowsDeleted) => {
-      res.json({ message: `${rowsDeleted} records deleted` });
-    })
-    .catch((error) => {
-      res.status(500).json({ error: 'Failed to delete records' });
-    });
+      .then((rowsDeleted) => {
+        res.json({ message: `${rowsDeleted} records deleted` });
+      })
+      .catch((error) => {
+        res.status(500).json({ error: 'Failed to delete records' });
+      });
   },
   register: async (req, res) => {
-    const { 
-      epid_number, 
-      true_afp, 
+    const {
+      epid_number,
+      true_afp,
       user_id,
-      final_cell_culture_result, 
-      date_cell_culture_result, 
-      final_combined_itd_result, 
-      type 
+      final_cell_culture_result,
+      date_cell_culture_result,
+      final_combined_itd_result,
+      type
     } = req.body;
-  
+
     try {
       // Find the related message for the given epid_number and type
       const message = await labstoolModel.findOne({
         where: { epid_number, type: "Stool 1" }
       });
-  
+
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       message.completed = 'true';
-  
+
       // Find existing record
       let existingRecord = await labratoryModel.findOne({
         where: { epid_number, type }
       });
-  
+
       // Update or create lab record
       if (existingRecord) {
         // Update fields of the existing record
@@ -403,52 +405,52 @@ GetAllMultimedia: async (req, res) => {
           user_id,
         });
       }
-  
+
       // Save both the lab record and message in parallel
       await Promise.all([existingRecord.save(), message.save()]);
-  
-      const responseMessage = existingRecord.isNewRecord 
-        ? 'Lab record created successfully' 
+
+      const responseMessage = existingRecord.isNewRecord
+        ? 'Lab record created successfully'
         : 'Lab record updated successfully';
-  
+
       return res.status(200).json({
         message: responseMessage,
         data: existingRecord
       });
-      
+
     } catch (error) {
       console.error('Error creating/updating lab info:', error);
       return res.status(500).json({ error: 'An error occurred while processing the lab record.' });
     }
   },
-  
-  
+
+
   registerStool: async (req, res) => {
     const { epid_number, stool_recieved_date, completed, speciement_condition, user_id, type } = req.body;
-  console.log( req.body);
+    console.log(req.body);
     try {
       // Check if a record already exists based on epid_number and type
       let existingRecord = await labstoolModel.findOne({
         where: { epid_number, type }
       });
-  
+
       if (existingRecord) {
         // Update the existing record if found
         existingRecord.stool_recieved_date = stool_recieved_date;
         existingRecord.speciement_condition = speciement_condition;
         existingRecord.user_id = user_id;
         existingRecord.completed = completed;
-        
+
         // Save updated record
         await existingRecord.save();
-        
+
         return res.status(200).json({
           success: true,
           message: 'Lab stool entry updated successfully',
           data: existingRecord
         });
       }
-  
+
       // Create a new record if no existing record is found
       const newLabForm = await labstoolModel.create({
         epid_number,
@@ -458,14 +460,14 @@ GetAllMultimedia: async (req, res) => {
         user_id,
         completed
       });
-  
+
       // Respond with the created entry
       return res.status(201).json({
         success: true,
         message: 'Lab stool entry created successfully',
         data: newLabForm
       });
-  
+
     } catch (error) {
       // Log the error and respond with an error message
       console.error('Error registering stool:', error.message);
@@ -476,44 +478,44 @@ GetAllMultimedia: async (req, res) => {
       });
     }
   },
-  
-  
+
+
   updateCommiteResult: async (req, res) => {
     try {
       console.log('Request params:', req.params); // Log the request parameters
       const { id } = req.params;
-      const { phone_no, full_name,description,result, user_id } = req.body; // Extract fields from the request body
-  
+      const { phone_no, full_name, description, result, user_id } = req.body; // Extract fields from the request body
+
       if (!id) {
         return res.status(400).json({ error: 'id parameter is required' });
       }
-  
+
       const message = await Committe.findOne({ where: { epid_number: id } });
 
       const message1 = await patientdemModel.findOne({ where: { epid_number: id } });
 
-  
+
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       // Update fields if provided
       if (phone_no) message.phone_no = phone_no;
       if (full_name) message.full_name = full_name;
-      if (result) 
+      if (result)
         message.result = result;
       message1.result = result;
 
 
       if (user_id) message.user_id = user_id;
-      if (description) 
+      if (description)
         message.description = description;
 
-  
+
       await message.save();
       await message1.save();
 
-     
+
       res.json({ message: 'Message updated successfully', data: message });
     } catch (error) {
       console.error(error);
@@ -526,20 +528,20 @@ GetAllMultimedia: async (req, res) => {
     try {
       console.log('Request params:', req.params); // Log the request parameters
       const { id } = req.params;
-  
+
       if (!id) {
         return res.status(400).json({ error: 'id parameter is required' });
       }
-  
+
       const message = await demographiVolModel.findOne({ where: { id: id } });
-  
+
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       message.status = 'seen';
       await message.save();
-  
+
       res.json({ message: 'Message status updated to seen' });
     } catch (error) {
       console.error(error);
@@ -571,32 +573,32 @@ GetAllMultimedia: async (req, res) => {
       const woredaCode = woreda.slice(0, 2).toUpperCase();
       const completeEpidNumber = `${regionCode}-${zoneCode}-${woredaCode}-${currentDate}-${epid_number}`;
       const patientDoc = new patientdemModel({
-        lat:latitude,
-        long:longitude,
+        lat: latitude,
+        long: longitude,
         epid_number: completeEpidNumber,
         first_name,
         phoneNo,
         last_name,
         gender,
-        birth_of_place:dateofbirth,
+        birth_of_place: dateofbirth,
         region,
         zone,
         woreda,
         user_id,
-        progressNo:"1",
+        progressNo: "1",
       });
       const commite = new Committe({
         epid_number: completeEpidNumber,
       });
 
 
-     console.log(req.body);
+      console.log(req.body);
       const progresss = new progress({
-   
+
         epid_number: completeEpidNumber,
-        progressNo:"1",
- 
-    
+        progressNo: "1",
+
+
       });
 
       await Promise.all([
@@ -616,7 +618,7 @@ GetAllMultimedia: async (req, res) => {
 
 
 
-  
+
   clinicalHistory: async (req, res) => {
     const {
       epid_number,
@@ -630,34 +632,34 @@ GetAllMultimedia: async (req, res) => {
       date_of_admission,
       medical_record_no,
       facility_name,
-user_id,
+      user_id,
     } = req.body;
     console.log(req.body);
     try {
-    
-  
-   
-  
+
+
+
+
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       message.progressNo = '2';
       await message.save();
-        const clinicalDoc = new clinicalModel({
-          epid_number,
-          fever_at_onset,
-          flaccid_sudden_paralysis,
-          paralysis_progressed,
-          asymmetric,
-          site_of_paralysis,
-          total_opv_doses,
-          admitted_to_hospital,
-          date_of_admission,
-          medical_record_no,
-          facility_name,
-          user_id,
+      const clinicalDoc = new clinicalModel({
+        epid_number,
+        fever_at_onset,
+        flaccid_sudden_paralysis,
+        paralysis_progressed,
+        asymmetric,
+        site_of_paralysis,
+        total_opv_doses,
+        admitted_to_hospital,
+        date_of_admission,
+        medical_record_no,
+        facility_name,
+        user_id,
       });
       clinicalDoc.save();
       res.status(201).json(clinicalDoc);
@@ -676,23 +678,23 @@ user_id,
       site_of_paralysis,
       user_id
     } = req.body;
-    
+
     console.log(req.body);
-  
+
     try {
       // Find the patient record by epid_number
       const patientRecord = await patientdemModel.findOne({ where: { epid_number: epid_number } });
-      
+
       if (!patientRecord) {
         return res.status(404).json({ error: 'Patient not found' });
       }
-  
+
       // Update the progress number in the patient record
 
-  
+
       // Check if a record with the same epid_number exists in stoolspecimanModel
       let stoolRecord = await stoolspecimanModel.findOne({ where: { epid_number: epid_number } });
-  
+
       if (stoolRecord) {
         // If record exists, update it
         stoolRecord.date_stool_1_collected = date_stool_1_collected;
@@ -718,7 +720,7 @@ user_id,
           site_of_paralysis,
           user_id
         });
-        patientRecord.progressNo = '13';
+        patientRecord.progressNo = '12';
         await patientRecord.save();
         await stoolRecord.save();
         res.status(201).json({ message: 'New record created successfully', stoolRecord });
@@ -730,7 +732,7 @@ user_id,
       res.status(500).json({ error: 'Error processing request' });
     }
   },
-  
+
   enviroment: async (req, res) => {
     const {
       epid_number,
@@ -739,16 +741,16 @@ user_id,
       humidity,
       snow,
       user_id
-     
+
     } = req.body;
     try {
- 
+
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
       console.log(message);
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       message.progressNo = '5';
       message.save();
       const envModel = new environmentModel({
@@ -758,7 +760,7 @@ user_id,
         humidity,
         snow,
         user_id,
-      
+
       });
 
       envModel.save();
@@ -782,7 +784,7 @@ user_id,
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
       }
-  
+
       message.progressNo = '4';
       message.save();
 
@@ -805,7 +807,7 @@ user_id,
   demoByVolunteer: async (req, res) => {
     const { woreda, region, zone } = req.query;
     console.log(req.query);
-  
+
     try {
       // Retrieve unique combinations of woreda, region, and zone for "health officer" role
       const existingUsers = await User.findAll({
@@ -814,9 +816,9 @@ user_id,
         group: ['woreda', 'region', 'zone'],
         raw: true, // Use raw: true to get plain objects
       });
-  
+
       let query = { user_role: 'Health Officer' }; // Ensure role is always part of the query
-  
+
       // Priority 1: All three match
       if (woreda && region && zone) {
         const match = existingUsers.find(user =>
@@ -824,7 +826,7 @@ user_id,
         );
         if (match) query = { ...query, woreda, region, zone };
       }
-  
+
       // Priority 2: Two match
       if (!Object.keys(query).length || Object.keys(query).length === 1) {
         if (woreda && zone) {
@@ -833,14 +835,14 @@ user_id,
           );
           if (match) query = { ...query, woreda, zone };
         }
-  
+
         if (!Object.keys(query).length || Object.keys(query).length === 1 && region && zone) {
           const match = existingUsers.find(user =>
             user.region === region && user.zone === zone
           );
           if (match) query = { ...query, region, zone };
         }
-  
+
         if (!Object.keys(query).length || Object.keys(query).length === 1 && woreda && region) {
           const match = existingUsers.find(user =>
             user.woreda === woreda && user.region === region
@@ -848,30 +850,30 @@ user_id,
           if (match) query = { ...query, woreda, region };
         }
       }
-  
+
       // Priority 3: One match
       if (!Object.keys(query).length || Object.keys(query).length === 1) {
         if (woreda) {
           const match = existingUsers.find(user => user.woreda === woreda);
           if (match) query = { ...query, woreda };
         }
-  
+
         if (!Object.keys(query).length || Object.keys(query).length === 1 && region) {
           const match = existingUsers.find(user => user.region === region);
           if (match) query = { ...query, region };
         }
-  
+
         if (!Object.keys(query).length || Object.keys(query).length === 1 && zone) {
           const match = existingUsers.find(user => user.zone === zone);
           if (match) query = { ...query, zone };
         }
       }
-  
+
       // Fetch filtered users
       const users = await User.findAll({
         where: query,
       });
-  
+
       res.json(users);
       console.log(users);
     } catch (error) {
@@ -879,21 +881,21 @@ user_id,
       res.status(500).send('Server error');
     }
   },
-  
-  
-  
-    
 
 
- 
+
+
+
+
+
 
   labstoolDoc: async (req, res) => {
     const {
- 
+
       stool1DateReceivedByLab,
       stool2DateReceivedByLab,
       specimenCondition,
- 
+
     } = req.body;
     try {
       const epid_number = await generateEpidNumber();
@@ -917,9 +919,9 @@ user_id,
 
   labstoolDoc: async (req, res) => {
     const {
-   
+
       first_name,
-    
+
       last_name,
 
       region,
@@ -930,9 +932,9 @@ user_id,
       hofficer_phonno
     } = req.body;
 
-  
+
     try {
-  
+
       const epid_number = await generateEpidNumber();
       const currentDate = new Date().toLocaleDateString();
       const regionCode = region.slice(0, 2).toUpperCase();
@@ -967,24 +969,39 @@ user_id,
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
-  
+
     try {
       const models = [
-        { name: 'Clinical History', model: clinicalModel },
-        { name: 'Demographic Voluntary', model: demographiVolModel },
-        { name: 'Follow-up Investigation', model: followupModel },
-        { name: 'Lab Stool Info', model: labstoolModel },
-        { name: 'Laboratory Info', model: labratoryModel },
-        { name: 'Multimedia Info', model: multimediaModel },
-        { name: 'Patient Demography', model: patientdemModel },
-        { name: 'Stool Specimen Info', model: stoolspecimanModel },
+        {
+          name: 'Clinical History',
+          model: clinicalModel,
+          excludeFields: ['createdAt', 'updatedAt', 'clinfo_id', 'user_id']
+        },
+        {
+          name: 'Demographic Voluntary', model: demographiVolModel, excludeFields: ['createdAt', 'updatedAt', "region_id", 'user_id']
+        },
+        { name: 'Follow-up Investigation', model: followupModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
+
+
+        { name: 'Lab Stool Info', model: labstoolModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
+        { name: 'Laboratory Info', model: labratoryModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
+        { name: 'Multimedia Info', model: multimediaModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
+        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', "result", "birth_of_place", "progressNo", 'followup_id', 'user_id'] },
+        { name: 'Stool Specimen Info', model: stoolspecimanModel, excludeFields: ['createdAt', "id", 'updatedAt', 'petient_id', 'user_id'] },
       ];
-  
+
       // Execute all model queries in parallel
       const results = await Promise.all(
-        models.map(async ({ name, model }) => {
+        models.map(async ({ name, model, excludeFields }) => {
           try {
-            const data = await model.findOne({ where: { epid_number } });
+            const queryOptions = { where: { epid_number } };
+
+            // Add attributes if excluding specific fields
+            if (excludeFields) {
+              queryOptions.attributes = { exclude: excludeFields };
+            }
+
+            const data = await model.findOne(queryOptions);
             return { name, data };
           } catch (err) {
             console.error(`Error fetching data for model "${name}":`, err.message);
@@ -992,7 +1009,7 @@ user_id,
           }
         })
       );
-  
+
       // Separate successful results and errors
       const responseData = results.reduce(
         (acc, { name, data, error }) => {
@@ -1007,7 +1024,7 @@ user_id,
         },
         { results: {}, errors: [] }
       );
-  
+
       // Send final response
       res.status(200).json({
         epid_number,
@@ -1023,15 +1040,16 @@ user_id,
     }
   },
 
-  
+
+
   getDataFormodels: async (req, res) => {
     const { epid_number } = req.params;
     console.log(`Received EPID Number: ${epid_number}`);
-  
+
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
-  
+
     try {
       const models = [
         {
@@ -1044,13 +1062,13 @@ user_id,
           model: environmentModel,
           attributes: ['tempreture', 'rainfall', 'humidity'], // Fetch these columns
         },
-      {
+        {
           name: 'Patient Demography',
           model: patientdemModel,
           attributes: ['region', 'birth_of_place', 'gender'], // Fetch these columns
         },
       ];
-  
+
       // Execute all model queries in parallel
       const results = await Promise.all(
         models.map(async ({ name, model, attributes }) => {
@@ -1066,7 +1084,7 @@ user_id,
           }
         })
       );
-  
+
       // Separate successful results and errors
       const responseData = results.reduce(
         (acc, { name, data, error }) => {
@@ -1081,7 +1099,7 @@ user_id,
         },
         { results: {}, errors: [] }
       );
-  
+
       // Send final response
       res.status(200).json({
         epid_number,
@@ -1096,7 +1114,7 @@ user_id,
       });
     }
   }
-  
+
 };
 
 

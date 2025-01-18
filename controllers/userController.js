@@ -5,9 +5,9 @@ const JWT = process.env.JWT_SECRET
 
 module.exports = {
   create: async (req, res) => {
-    const { first_name, last_name,gender,phoneNo,emergency_phonno,region,zone,woreda,lat,long,user_role,password } = req.body;
-console.log(JWT);
-console.log(req.body);
+    const { first_name, last_name, gender, phoneNo, emergency_phonno, region, zone, woreda, lat, long, user_role, password } = req.body;
+    console.log(JWT);
+    console.log(req.body);
     try {
 
       const employeeCount = await User.count();
@@ -17,13 +17,13 @@ console.log(req.body);
       if (existingUser) {
         return res.status(409).json({ message: 'Username already exists' });
       }
-  
+
       // Create a new user
-      const newUser = await User.create({ first_name,gender, last_name,phoneNo,region,emergency_phonno,zone,woreda,lat,long,user_role,password });
-  
+      const newUser = await User.create({ first_name, gender, last_name, phoneNo, region, emergency_phonno, zone, woreda, lat, long, user_role, password });
+
       // Generate JWT
       const token = jwt.sign({ userId: newUser.user_id }, JWT);
-  
+
       res.json({ message: 'User registered successfully', token });
     } catch (error) {
       console.error(error);
@@ -40,38 +40,39 @@ console.log(req.body);
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-      else{
-  
-      // Generate JWT
-      const token = jwt.sign({ userId: user.user_id }, JWT);
-      res.status(200).json({ message:"Successfully Login",
-        token: token,
-    
+      else {
 
-        user_id:user.user_id,
-        first_name:user.first_name,
-        last_name:user.last_name,
-        password:user.password,
+        // Generate JWT
+        const token = jwt.sign({ userId: user.user_id }, JWT);
+        res.status(200).json({
+          message: "Successfully Login",
+          token: token,
 
 
-        user_role:user.user_role,
-        phoneNo:user.phoneNo,
-        zone:user.zone,
-        // woreda:user.woreda,
-        woreda:user.woreda,
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          password: user.password,
 
-        region:user.region,
-        emergency_phonno:user.emergency_phonno,
-        status:user.status,
 
-   
+          user_role: user.user_role,
+          phoneNo: user.phoneNo,
+          zone: user.zone,
+          // woreda:user.woreda,
+          woreda: user.woreda,
 
-      
+          region: user.region,
+          emergency_phonno: user.emergency_phonno,
+          status: user.status,
 
-      });
+
+
+
+
+        });
       }
 
- 
+
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
@@ -79,25 +80,29 @@ console.log(req.body);
   },
 
   getAllUser: (req, res) => {
-    User.findAll()
-      .then((user) => {
-        res.json(user);
+    User.findAll({
+      order: [['createdAt', 'DESC']], // Order by createdAt in descending order
+    })
+      .then((users) => {
+        res.json(users);
       })
       .catch((error) => {
-        res.status(500).json({ error: 'Failed to retrieve user' });
+        console.error('Error retrieving users:', error);
+        res.status(500).json({ error: 'Failed to retrieve users' });
       });
   },
+
 
   getUserByPhoNno: (req, res) => {
     const { phoneNo } = req.body; // Extract phone number from request body
 
     console.log(phoneNo)
-  
+
     // Validate that phone number is provided
     if (!phoneNo) {
       return res.status(400).json({ error: 'Phone number is required' });
     }
-  
+
     // Find the user by phone number
     User.findOne({ where: { phoneNo } }) // Assuming phoneNo is a unique field
       .then((student) => {
@@ -129,69 +134,69 @@ console.log(req.body);
       });
   },
 
-// Assuming you're using Sequelize for ORM
-updateUser: async (req, res) => {
-  const id = req.params.id;
-  const { first_name, last_name, phoneNo, zone, woreda, region, password, status } = req.body;
+  // Assuming you're using Sequelize for ORM
+  updateUser: async (req, res) => {
+    const id = req.params.id;
+    const { first_name, last_name, phoneNo, zone, woreda, region, password, status } = req.body;
 
-  try {
-    // Fetch the user by ID
-    const user = await User.findByPk(id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    try {
+      // Fetch the user by ID
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Update user details only with the fields provided in req.body
+      await user.update({
+        first_name: first_name || user.first_name,
+        last_name: last_name || user.last_name,
+        phoneNo: phoneNo || user.phoneNo,
+        zone: zone || user.zone,
+        woreda: woreda || user.woreda,
+        region: region || user.region,
+        status: status || user.status,
+        password: password || user.password // Ensure password is hashed
+      });
+
+      res.json({ message: 'User updated successfully' });
+    } catch (error) {
+      console.error(error); // Log the error for debugging
+      res.status(500).json({ error: 'Failed to update user' });
     }
+  },
+  updateUserPhoNo: async (req, res) => {
+    const { phoneNo, first_name, last_name, zone, woreda, region, password, status } = req.body;
 
-    // Update user details only with the fields provided in req.body
-    await user.update({
-      first_name: first_name || user.first_name,
-      last_name: last_name || user.last_name,
-      phoneNo: phoneNo || user.phoneNo,
-      zone: zone || user.zone,
-      woreda: woreda || user.woreda,
-      region: region || user.region,
-      status: status || user.status,
-      password: password || user.password // Ensure password is hashed
-    });
+    try {
+      // Ensure phoneNo is provided
+      if (!phoneNo) {
+        return res.status(400).json({ error: 'phoneNo is required to update the user' });
+      }
 
-    res.json({ message: 'User updated successfully' });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: 'Failed to update user' });
-  }
-},
-updateUserPhoNo: async (req, res) => {
-  const { phoneNo, first_name, last_name, zone, woreda, region, password, status } = req.body;
+      // Fetch the user by phoneNo
+      const user = await User.findOne({ where: { phoneNo } });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found with the provided phoneNo' });
+      }
 
-  try {
-    // Ensure phoneNo is provided
-    if (!phoneNo) {
-      return res.status(400).json({ error: 'phoneNo is required to update the user' });
+      // Update user details only with the fields provided in req.body
+      await user.update({
+        first_name: first_name || user.first_name,
+        last_name: last_name || user.last_name,
+        phoneNo: phoneNo || user.phoneNo, // Optional, but you may omit updating phoneNo itself
+        zone: zone || user.zone,
+        woreda: woreda || user.woreda,
+        region: region || user.region,
+        status: status || user.status,
+        password: password || user.password // Ensure password is hashed
+      });
+
+      res.json({ message: 'User updated successfully' });
+    } catch (error) {
+      console.error(error); // Log the error for debugging
+      res.status(500).json({ error: 'Failed to update user' });
     }
-
-    // Fetch the user by phoneNo
-    const user = await User.findOne({ where: { phoneNo } });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found with the provided phoneNo' });
-    }
-
-    // Update user details only with the fields provided in req.body
-    await user.update({
-      first_name: first_name || user.first_name,
-      last_name: last_name || user.last_name,
-      phoneNo: phoneNo || user.phoneNo, // Optional, but you may omit updating phoneNo itself
-      zone: zone || user.zone,
-      woreda: woreda || user.woreda,
-      region: region || user.region,
-      status: status || user.status,
-      password: password || user.password // Ensure password is hashed
-    });
-
-    res.json({ message: 'User updated successfully' });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: 'Failed to update user' });
-  }
-},
+  },
 
 
   deleteStudent: (req, res) => {

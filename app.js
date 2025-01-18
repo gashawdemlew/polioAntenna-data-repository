@@ -3,7 +3,9 @@ const cors = require('cors');
 const path = require('path');
 
 const clinicRoute = require('./routes/clinicalRoute');
-const  userRoute = require('./routes/userRoute');
+const userRoute = require('./routes/userRoute');
+const ModelRoute = require('./routes/modelRoute');
+
 const clinicalModel = require('./models/clinicalHistoryModel');
 
 
@@ -59,6 +61,8 @@ checkDatabaseConnection();
 // Routes
 app.use('/user', userRoute);
 app.use('/clinic', clinicRoute);
+app.use('/ModelRoute', ModelRoute);
+
 
 
 // Error handling middleware
@@ -68,7 +72,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
