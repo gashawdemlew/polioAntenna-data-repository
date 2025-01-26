@@ -18,13 +18,13 @@ const FollowUp = sequelize.define('followup_investigation', {
   residual_paralysis: {
     type: DataTypes.STRING,
   },
-  date_of_date: {
-    type: DataTypes.DATE,
-  },
-  paralysis_progressed: {
-    type: DataTypes.STRING,
-  },
- 
+  // date_of_date: {
+  //   type: DataTypes.DATE,
+  // },
+  // paralysis_progressed: {
+  //   type: DataTypes.STRING,
+  // },
+
   user_id: {
     type: DataTypes.STRING,
   },

@@ -10,15 +10,15 @@ const ImageModel = sequelize.define('ImageModel1', {
     },
     message: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     suspected: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     confidence_interval: {
         type: DataTypes.STRING, // Adjust based on your database
-        allowNull: false,
+        allowNull: true,
     },
 
 });

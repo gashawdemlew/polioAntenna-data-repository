@@ -11,6 +11,9 @@ const stoolspecimanModel = require('../models/stool_speciement_info');
 const progress = require('../models/progress');
 const User = require('../models/userModel');
 const Committe = require('../models/commite_ressult');
+const handbrake = require('handbrake-js'); // Alternative for video compression
+
+const sharp = require('sharp');
 
 
 const { Op } = require('sequelize');
@@ -20,73 +23,115 @@ const path = require('path');
 const fs = require('fs');
 const ClinicalHistory = require('../models/clinicalHistoryModel');
 require('dotenv').config();
+// --- Configuration (Move to config file or env vars) ---
 
-const JWT = process.env.JWT_SECRET;
+// Configuration
+const MAX_IMAGE_WIDTH = 800;
+const MAX_IMAGE_HEIGHT = 600;
+const VIDEO_PRESET = 'Very Fast 1080p30'; // Use a valid preset name
+const uploadPath = path.join(__dirname, '..', 'uploads');
 
-const generateEpidNumber = async () => {
+// Ensure upload directory exists
+if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+
+// Multer setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadPath),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+
+// Image processing
+const processImage = async (filePath) => {
+  const compressedPath = `${filePath.split('.')[0]}_compressed.webp`;
   try {
-    const epidCount = await patientdemModel.count() || 0;
-    if (epidCount === 0) {
-      return 'E-001'; // Or any default value you prefer
-    }
-    return `E-${(epidCount + 1).toString().padStart(3, '0')}`;
+    await sharp(filePath)
+      .resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, { fit: 'inside' })
+      .webp({ quality: 80 })
+      .toFile(compressedPath);
+    await fs.promises.unlink(filePath);
+    return compressedPath;
   } catch (error) {
-    console.error('Error generating EPID number:', error);
-    throw new Error('Error generating EPID number');
+    console.error('Error processing image:', error);
+    throw new Error('Failed to process image');
   }
 };
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '..', 'uploads');
-    // Ensure the upload directory exists
-    fs.mkdirSync(uploadPath, { recursive: true });
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage });
+// Video processing
+const processVideo = async (filePath) => {
+  const compressedPath = `${filePath.split('.')[0]}_compressed.mp4`;
+  return new Promise((resolve, reject) => {
+    handbrake
+      .spawn({
+        input: filePath,
+        output: compressedPath,
+        preset: VIDEO_PRESET,
+      })
+      .on('complete', async () => {
+        await fs.promises.unlink(filePath);
+        resolve(compressedPath);
+      })
+      .on('error', (err) => {
+        console.error('Error processing video:', err);
+        reject('Failed to process video');
+      });
+  });
+};
 
 module.exports = {
   create: async (req, res) => {
     const { hofficer_name, hofficer_phonno, epid_number } = req.body;
-    console.log(req.body);
 
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
 
     try {
-
-
-      // Handle file uploads
       const multimediaData = { epid_number };
 
-      if (req.files && req.files.image) {
-        const { path: filePath } = req.files.image[0];
-        multimediaData.iamge_path = filePath;
+      if (req.files) {
+        if (req.files.image) {
+          try {
+            const compressedImage = await processImage(req.files.image[0].path);
+            multimediaData.image_path = compressedImage;
+          } catch (err) {
+            return res.status(500).json({ error: `Image processing failed: ${err.message}` });
+          }
+        }
+
+        if (req.files.video) {
+          try {
+            const compressedVideo = await processVideo(req.files.video[0].path);
+            multimediaData.video_path = compressedVideo;
+          } catch (err) {
+            return res.status(500).json({ error: `Video processing failed: ${err.message}` });
+          }
+        }
       }
-
-      if (req.files && req.files.video) {
-        const { path: filePath } = req.files.video[0];
-        multimediaData.viedeo_path = filePath;
-        console.log(filePath);
-        console.log(req.files.video
-        );
-
-      }
-
-      const multimediaDoc = new multimediaModel(multimediaData);
 
       const patient = await patientdemModel.findOne({ where: { epid_number } });
+      if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
-      if (!patient) {
-        return res.status(404).json({ error: 'Patient not found' });
+      const existingPushMessage = await pushMessageModel.findOne({ where: { epid_number } });
+      if (existingPushMessage) {
+        existingPushMessage.hofficer_name = hofficer_name;
+        existingPushMessage.hofficer_phonno = hofficer_phonno;
+        existingPushMessage.region = patient.region;
+        existingPushMessage.zone = patient.zone;
+        existingPushMessage.woreda = patient.woreda;
+        existingPushMessage.status = 'unseen';
+        patient.progressNo = 'completed';
+
+        await Promise.all([
+          existingPushMessage.save(),
+          patient.save(),
+          multimediaModel.upsert(multimediaData, { where: { epid_number } }),
+        ]);
+
+        return res.status(200).json(existingPushMessage);
       }
 
       const pushMessage = new pushMessageModel({
@@ -98,24 +143,25 @@ module.exports = {
         region: patient.region,
         zone: patient.zone,
         woreda: patient.woreda,
-        status: "unseen"
+        status: 'unseen',
       });
 
-      patient.progressNo = '13';
-      await patient.save();
+      patient.progressNo = 'completed';
 
       await Promise.all([
-        multimediaDoc.save(),
+        new multimediaModel(multimediaData).save(),
         pushMessage.save(),
+        patient.save(),
       ]);
 
       res.status(201).json(pushMessage);
-      console.log(`RRRRRRRRRR ${pushMessage}`)
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'An error occurred while creating the documents' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'An error occurred while processing the request' });
     }
   },
+
+
 
   createVol: async (req, res) => {
     const { first_name, last_name, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
@@ -580,7 +626,7 @@ module.exports = {
         phoneNo,
         last_name,
         gender,
-        birth_of_place: dateofbirth,
+        dateofbirth,
         region,
         zone,
         woreda,
@@ -703,7 +749,7 @@ module.exports = {
         stoolRecord.date_stool_2_sent_lab = date_stool_2_sent_lab;
         stoolRecord.site_of_paralysis = site_of_paralysis;
         stoolRecord.user_id = user_id;
-        patientRecord.progressNo = 'completed';
+        patientRecord.progressNo = '13';
 
         await stoolRecord.save();
         await patientRecord.save();
@@ -778,6 +824,7 @@ module.exports = {
       residual_paralysis,
       user_id,
     } = req.body;
+    console.log(req.body)
     try {
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
       console.log(message);
@@ -986,7 +1033,7 @@ module.exports = {
         { name: 'Lab Stool Info', model: labstoolModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
         { name: 'Laboratory Info', model: labratoryModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
         { name: 'Multimedia Info', model: multimediaModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
-        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', "result", "birth_of_place", "progressNo", 'followup_id', 'user_id'] },
+        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', "result", "dateofbirth", "progressNo", 'followup_id', 'user_id'] },
         { name: 'Stool Specimen Info', model: stoolspecimanModel, excludeFields: ['createdAt', "id", 'updatedAt', 'petient_id', 'user_id'] },
       ];
 
@@ -1065,7 +1112,7 @@ module.exports = {
         {
           name: 'Patient Demography',
           model: patientdemModel,
-          attributes: ['region', 'birth_of_place', 'gender'], // Fetch these columns
+          attributes: ['region', 'dateofbirth', 'gender'], // Fetch these columns
         },
       ];
 

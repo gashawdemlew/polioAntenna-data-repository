@@ -12,13 +12,13 @@ const User = sequelize.define('petient_demography', {
     type: DataTypes.STRING,
     // unique: true,
   },
-  region_id: {
-    type: DataTypes.STRING,
-  },
+  // region_id: {
+  //   type: DataTypes.STRING,
+  // },
   gender: {
     type: DataTypes.STRING,
   },
-  birth_of_place: {
+  dateofbirth: {
     type: DataTypes.DATE,
   },
 
@@ -57,7 +57,7 @@ const User = sequelize.define('petient_demography', {
   },
   result: {
     type: DataTypes.STRING,
-    defaultValue:"pending"
+    defaultValue: "pending"
 
   },
 
@@ -77,6 +77,8 @@ async function syncModels() {
 async function initialize() {
   try {
     await sequelize.authenticate();
+    // await User.sync({ alter: true }); // This will update the table
+
     console.log('Database connection has been established successfully.');
     await syncModels();
   } catch (error) {
