@@ -320,7 +320,24 @@ module.exports = {
     }
   },
 
+  getDataByUserIdCompleted: async (req, res) => {
+    const { user_id } = req.params;
 
+    try {
+      const data = await patientdemModel.findAll({
+        where: {
+          user_id: user_id,
+          progressNo: 'completed', // Change here to filter for completed
+        },
+        order: [['createdAt', 'DESC']], // Order by createdAt in descending order
+      });
+
+      res.json(data);
+    } catch (error) {
+      console.error('Error retrieving data:', error);
+      res.status(500).json({ error: 'Failed to retrieve data' });
+    }
+  },
 
   getDataByUserId: async (req, res) => {
     const { user_id } = req.params;
@@ -1117,6 +1134,11 @@ module.exports = {
       ];
 
       // Execute all model queries in parallel
+
+      /////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////
+
+
       const results = await Promise.all(
         models.map(async ({ name, model, attributes }) => {
           try {

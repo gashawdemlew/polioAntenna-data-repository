@@ -34,7 +34,12 @@ router.put('/updateCommiteResult/:id(*)', userController.updateCommiteResult);
 
 
 router.get('/getDataByUserId/:user_id', userController.getDataByUserId);
+router.get('/getDataByUserIdCompleted/:user_id', userController.getDataByUserIdCompleted);
+
 router.get('/getCommitte', userController.getCommite);
+
+
+
 
 router.delete('/deleteDataById/:petient_id', userController.deleteDataById);
 
