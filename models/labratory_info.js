@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); 
+const sequelize = require('../config/database');
+const PatientDemography = require('./petient_demography'); // Assumed path
 
 const LabratoryInfo = sequelize.define('labaratory_info1', {
   lab_id: {
@@ -9,7 +10,13 @@ const LabratoryInfo = sequelize.define('labaratory_info1', {
   },
   epid_number: {
     type: DataTypes.STRING,
-
+    allowNull: false, // Or whatever constraint is appropriate
+    references: {
+      model: PatientDemography, // Reference the PatientDemography model
+      key: 'epid_number',      // Reference the 'epid_number' column in PatientDemography
+    },
+    onUpdate: 'CASCADE',       // Optional: Define behavior on update in patient_demography
+    onDelete: 'CASCADE',       // Optional: Define behavior on delete in patient_demography
   },
   type: {
     type: DataTypes.STRING,
@@ -18,7 +25,7 @@ const LabratoryInfo = sequelize.define('labaratory_info1', {
 
   true_afp: {
     type: DataTypes.STRING,
-   
+
   },
   final_cell_culture_result: {
     type: DataTypes.STRING,

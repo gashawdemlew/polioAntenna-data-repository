@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
+const PatientDemography = require('./petient_demography'); // Assumed path
 
 const LabratoryInfo = sequelize.define('lab_stool_info1', {
   stool_id: {
@@ -9,8 +10,14 @@ const LabratoryInfo = sequelize.define('lab_stool_info1', {
   },
   epid_number: {
     type: DataTypes.STRING,
+    allowNull: false, // Or whatever constraint is appropriate
+    references: {
+      model: PatientDemography, // Reference the PatientDemography model
+      key: 'epid_number',      // Reference the 'epid_number' column in PatientDemography
+    },
+    onUpdate: 'CASCADE',       // Optional: Define behavior on update in patient_demography
+    onDelete: 'CASCADE',       // Optional: Define behavior on delete in patient_demography
   },
-
 
   stool_recieved_date: {
     type: DataTypes.DATE,
@@ -27,7 +34,7 @@ const LabratoryInfo = sequelize.define('lab_stool_info1', {
   user_id: {
     type: DataTypes.STRING,
   },
- 
+
 
 
 });

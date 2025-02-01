@@ -10,7 +10,7 @@ const User = sequelize.define('petient_demography', {
 
   epid_number: {
     type: DataTypes.STRING,
-    // unique: true,
+    unique: true,
   },
   // region_id: {
   //   type: DataTypes.STRING,
@@ -55,6 +55,13 @@ const User = sequelize.define('petient_demography', {
     type: DataTypes.STRING,
 
   },
+  lab_stool: {
+    type: DataTypes.STRING,
+    defaultValue: "not_recieved"
+
+  },
+
+
   result: {
     type: DataTypes.STRING,
     defaultValue: "pending"

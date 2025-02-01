@@ -26,6 +26,8 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 async function checkDatabaseConnection() {
   try {
+    await sequelize.sync({ alter: true });
+
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
   } catch (error) {
@@ -47,6 +49,8 @@ async function syncModels() {
 // Check database connection and sync models
 async function initialize() {
   try {
+    await sequelize.sync({ alter: true });
+
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     await syncModels();

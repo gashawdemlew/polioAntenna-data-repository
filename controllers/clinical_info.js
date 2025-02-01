@@ -12,6 +12,7 @@ const progress = require('../models/progress');
 const User = require('../models/userModel');
 const Committe = require('../models/commite_ressult');
 const handbrake = require('handbrake-js'); // Alternative for video compression
+const methrologymodel = require('../models/methrologymodel');
 
 const sharp = require('sharp');
 
@@ -81,9 +82,29 @@ const processVideo = async (filePath) => {
   });
 };
 
+
+const generateEpidNumber = async () => {
+  try {
+    const epidCount = await patientdemModel.count() || 0;
+    if (epidCount === 0) {
+      return 'E-001'; // Or any default value you prefer
+    }
+    return `E-${(epidCount + 1).toString().padStart(3, '0')}`;
+  } catch (error) {
+    console.error('Error generating EPID number:', error);
+    throw new Error('Error generating EPID number');
+  }
+};
+
 module.exports = {
+
+
+
+
   create: async (req, res) => {
-    const { hofficer_name, hofficer_phonno, epid_number } = req.body;
+
+    const { hofficer_name, hofficer_phonno, epid_number, message, confidence_interval, prediction } = req.body;
+    console.log(req.body);
 
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
@@ -92,11 +113,23 @@ module.exports = {
     try {
       const multimediaData = { epid_number };
 
+      const [methrologymodelInstance, created] = await methrologymodel.upsert(
+        {
+          message,
+          epid_number,
+          prediction,
+          confidence_interval,
+        },
+        { where: { epid_number } }
+      );
+
+
+
       if (req.files) {
         if (req.files.image) {
           try {
             const compressedImage = await processImage(req.files.image[0].path);
-            multimediaData.image_path = compressedImage;
+            multimediaData.iamge_path = compressedImage;
           } catch (err) {
             return res.status(500).json({ error: `Image processing failed: ${err.message}` });
           }
@@ -105,7 +138,7 @@ module.exports = {
         if (req.files.video) {
           try {
             const compressedVideo = await processVideo(req.files.video[0].path);
-            multimediaData.video_path = compressedVideo;
+            multimediaData.viedeo_path = compressedVideo;
           } catch (err) {
             return res.status(500).json({ error: `Video processing failed: ${err.message}` });
           }
@@ -178,7 +211,7 @@ module.exports = {
 
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
-        multimediaData.iamge_path = filePath;
+        multimediaData.iamge_path = compressedImage;
       }
 
       if (req.files && req.files.video) {
@@ -487,24 +520,21 @@ module.exports = {
     }
   },
 
-
   registerStool: async (req, res) => {
     const { epid_number, stool_recieved_date, completed, speciement_condition, user_id, type } = req.body;
     console.log(req.body);
+
     try {
       // Check if a record already exists based on epid_number and type
-      let existingRecord = await labstoolModel.findOne({
-        where: { epid_number, type }
-      });
+      let existingRecord = await labstoolModel.findOne({ where: { epid_number, type } });
+      let stool = await patientdemModel.findOne({ where: { epid_number } });
 
       if (existingRecord) {
-        // Update the existing record if found
+        // Update the existing record
         existingRecord.stool_recieved_date = stool_recieved_date;
         existingRecord.speciement_condition = speciement_condition;
         existingRecord.user_id = user_id;
         existingRecord.completed = completed;
-
-        // Save updated record
         await existingRecord.save();
 
         return res.status(200).json({
@@ -524,7 +554,16 @@ module.exports = {
         completed
       });
 
-      // Respond with the created entry
+      if (stool) {
+        stool.lab_stool = "recieved";
+        await stool.save();
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Patient record not found'
+        });
+      }
+
       return res.status(201).json({
         success: true,
         message: 'Lab stool entry created successfully',
@@ -532,7 +571,6 @@ module.exports = {
       });
 
     } catch (error) {
-      // Log the error and respond with an error message
       console.error('Error registering stool:', error.message);
       return res.status(500).json({
         success: false,
@@ -541,6 +579,7 @@ module.exports = {
       });
     }
   },
+
 
 
   updateCommiteResult: async (req, res) => {

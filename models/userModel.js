@@ -42,38 +42,38 @@ const User = sequelize.define('usertable', {
   },
   emergency_phonno: {
     type: DataTypes.STRING,
-    
+
   },
 
   status: {
     type: DataTypes.STRING,
-  defaultValue:"Active"
-    
+    defaultValue: "Active"
+
   },
 
-  
+
 });
 
-// async function syncModels() {
-//   try {
-//     await sequelize.sync({ alter: true });
-//     console.log('Models synchronized with the database.');
-//   } catch (error) {
-//     console.error('Unable to sync models with the database:', error);
-//   }
-// }
+async function syncModels() {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('Models synchronized with the database.');
+  } catch (error) {
+    console.error('Unable to sync models with the database:', error);
+  }
+}
 
-// // Check database connection and sync models
-// async function initialize() {
-//   try {
-//     await sequelize.authenticate();
-//     console.log('Database connection has been established successfully.');
-//     await syncModels();
-//   } catch (error) {
-//     console.error('Unable to connect to the database:', error);
-//   }
-// }
+// Check database connection and sync models
+async function initialize() {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
+    await syncModels();
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+}
 
-// initialize();
+initialize();
 
 module.exports = User;

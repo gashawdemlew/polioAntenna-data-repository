@@ -2,17 +2,24 @@
 
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
+const PatientDemography = require('./petient_demography'); // Assumed path
 
 const MethrologyModel = sequelize.define('MethrologyModel1', {
   epid_number: {
     type: DataTypes.STRING,
-    // unique: true,
+    allowNull: false, // Or whatever constraint is appropriate
+    references: {
+      model: PatientDemography, // Reference the PatientDemography model
+      key: 'epid_number',      // Reference the 'epid_number' column in PatientDemography
+    },
+    onUpdate: 'CASCADE',       // Optional: Define behavior on update in patient_demography
+    onDelete: 'CASCADE',       // Optional: Define behavior on delete in patient_demography
   },
   message: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  suspected: {
+  prediction: {
     type: DataTypes.STRING,
     allowNull: true,
   },

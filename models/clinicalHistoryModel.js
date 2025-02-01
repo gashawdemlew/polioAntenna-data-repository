@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
+const PatientDemography = require('./petient_demography'); // Assumed path
 
 const ClinicalHistory = sequelize.define('clinical_history', {
   clinfo_id: {
@@ -10,7 +11,13 @@ const ClinicalHistory = sequelize.define('clinical_history', {
 
   epid_number: {
     type: DataTypes.STRING,
-    // unique: true,
+    allowNull: false, // Or whatever constraint is appropriate
+    references: {
+      model: PatientDemography, // Reference the PatientDemography model
+      key: 'epid_number',      // Reference the 'epid_number' column in PatientDemography
+    },
+    onUpdate: 'CASCADE',       // Optional: Define behavior on update in patient_demography
+    onDelete: 'CASCADE',       // Optional: Define behavior on delete in patient_demography
   },
   date_after_onset: {
     type: DataTypes.DATE,

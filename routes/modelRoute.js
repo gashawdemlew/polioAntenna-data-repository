@@ -1,5 +1,5 @@
 const express = require('express');
-const { fetchAllData,fetchDataByEpidNumber, createData } = require("../controllers/modelController");
+const { fetchAllData, fetchDataByEpidNumber, createData } = require("../controllers/modelController");
 
 const router = express.Router();
 
