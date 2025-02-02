@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 const PatientDemography = require('./petient_demography'); // Assumed path
 
-const LabratoryInfo = sequelize.define('lab_stool_info1', {
+const LabratoryInfo = sequelize.define('lab_stool_info', {
   stool_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,

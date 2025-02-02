@@ -2,24 +2,31 @@ const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const JWT = process.env.JWT_SECRET
+const bcrypt = require('bcrypt');
 
 module.exports = {
+
+
   create: async (req, res) => {
     const { first_name, last_name, gender, phoneNo, emergency_phonno, region, zone, woreda, lat, long, user_role, password } = req.body;
     console.log(JWT);
     console.log(req.body);
-    try {
 
+    try {
       const employeeCount = await User.count();
       const employeeId = `E-${(employeeCount + 1).toString().padStart(3, '0')}`;
-      // Check if the username already exists
+
+      // Check if the phone number already exists
       const existingUser = await User.findOne({ where: { phoneNo } });
       if (existingUser) {
         return res.status(409).json({ message: 'Username already exists' });
       }
 
-      // Create a new user
-      const newUser = await User.create({ first_name, gender, last_name, phoneNo, region, emergency_phonno, zone, woreda, lat, long, user_role, password });
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create a new user with the hashed password
+      const newUser = await User.create({ first_name, gender, last_name, phoneNo, region, emergency_phonno, zone, woreda, lat, long, user_role, password: hashedPassword });
 
       // Generate JWT
       const token = jwt.sign({ userId: newUser.user_id }, JWT);
@@ -35,44 +42,49 @@ module.exports = {
     const { phoneNo, password } = req.body;
 
     try {
-      // Authenticate user credentials
-      const user = await User.findOne({ where: { phoneNo, password } });
+      // Find the user by phone number
+      const user = await User.findOne({ where: { phoneNo } });
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-      else {
 
-        // Generate JWT
-        const token = jwt.sign({ userId: user.user_id }, JWT);
-        res.status(200).json({
-          message: "Successfully Login",
-          token: token,
+      let isPasswordValid;
 
-
-          user_id: user.user_id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          password: user.password,
-
-
-          user_role: user.user_role,
-          phoneNo: user.phoneNo,
-          zone: user.zone,
-          // woreda:user.woreda,
-          woreda: user.woreda,
-
-          region: user.region,
-          emergency_phonno: user.emergency_phonno,
-          status: user.status,
-
-
-
-
-
-        });
+      if (user.password.startsWith('$2')) {
+        // Password is hashed with bcrypt
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      } else {
+        // Plain text password
+        isPasswordValid = password === user.password;
       }
 
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
 
+      // Migrate to hashed password if it was plaintext
+      if (!user.password.startsWith('$2')) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        await user.save(); // Save the hashed password for future logins
+      }
+
+      // Generate JWT
+      const token = jwt.sign({ userId: user.user_id }, JWT);
+      res.status(200).json({
+        message: "Successfully logged in",
+        token: token,
+        user_id: user.user_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        user_role: user.user_role,
+        phoneNo: user.phoneNo,
+        zone: user.zone,
+        woreda: user.woreda,
+        region: user.region,
+        emergency_phonno: user.emergency_phonno,
+        status: user.status,
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });

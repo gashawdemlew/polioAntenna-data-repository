@@ -4,7 +4,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 const PatientDemography = require('./petient_demography'); // Assumed path
 
-const MethrologyModel = sequelize.define('MethrologyModel1', {
+const MethrologyModel = sequelize.define('ClinicalModelResults', {
   epid_number: {
     type: DataTypes.STRING,
     allowNull: false, // Or whatever constraint is appropriate

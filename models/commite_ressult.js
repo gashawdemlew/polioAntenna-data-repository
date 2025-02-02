@@ -9,7 +9,7 @@ const Committe = sequelize.define('Committe_result', {
   },
   result: {
     type: DataTypes.STRING,
-  
+
   },
   phone_no: {
     type: DataTypes.STRING,

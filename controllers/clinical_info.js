@@ -197,7 +197,7 @@ module.exports = {
 
 
   createVol: async (req, res) => {
-    const { first_name, last_name, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
+    const { first_name, last_name, user_id, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
     console.log(req.body);
 
     try {
@@ -206,17 +206,22 @@ module.exports = {
         first_name,
         last_name,
         selected_health_officcer: hofficer_name,
-        region, woreda, zone, lat, long, gender, phonNo,
+        region, woreda, zone, lat, long, gender, phonNo, user_id
       };
 
       if (req.files && req.files.image) {
         const { path: filePath } = req.files.image[0];
+
+
+        const compressedImage = await processImage(req.files.image[0].path);
         multimediaData.iamge_path = compressedImage;
       }
 
       if (req.files && req.files.video) {
-        const { path: filePath } = req.files.video[0];
-        multimediaData.viedeo_path = filePath;
+
+
+        const compressedVideo = await processVideo(req.files.video[0].path);
+        multimediaData.viedeo_path = compressedVideo;
       }
 
       const multimediaDoc = new demographiVolModel(multimediaData);
@@ -585,16 +590,18 @@ module.exports = {
   updateCommiteResult: async (req, res) => {
     try {
       console.log('Request params:', req.params); // Log the request parameters
-      const { id } = req.params;
+      const { epid_number } = req.params;
       const { phone_no, full_name, description, result, user_id } = req.body; // Extract fields from the request body
 
-      if (!id) {
+      console.log(req.body);
+
+      if (!epid_number) {
         return res.status(400).json({ error: 'id parameter is required' });
       }
 
-      const message = await Committe.findOne({ where: { epid_number: id } });
+      const message = await Committe.findOne({ where: { epid_number: epid_number } });
 
-      const message1 = await patientdemModel.findOne({ where: { epid_number: id } });
+      const message1 = await patientdemModel.findOne({ where: { epid_number: epid_number } });
 
 
       if (!message) {
@@ -728,6 +735,7 @@ module.exports = {
       flaccid_sudden_paralysis,
       paralysis_progressed,
       asymmetric,
+      date_after_onset,
       site_of_paralysis,
       total_opv_doses,
       admitted_to_hospital,
@@ -755,6 +763,7 @@ module.exports = {
         flaccid_sudden_paralysis,
         paralysis_progressed,
         asymmetric,
+        date_after_onset,
         site_of_paralysis,
         total_opv_doses,
         admitted_to_hospital,
@@ -845,6 +854,7 @@ module.exports = {
       user_id
 
     } = req.body;
+    console.log(req.body);
     try {
 
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
@@ -1097,8 +1107,11 @@ module.exports = {
       const results = await Promise.all(
         models.map(async ({ name, model, excludeFields }) => {
           try {
-            const queryOptions = { where: { epid_number } };
+            const queryOptions = {
+              where: { epid_number },
+              order: [['createdAt', 'DESC']], // Order by createdAt descending
 
+            };
             // Add attributes if excluding specific fields
             if (excludeFields) {
               queryOptions.attributes = { exclude: excludeFields };

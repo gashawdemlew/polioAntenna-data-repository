@@ -16,7 +16,7 @@ const progress = sequelize.define('progress', {
 
   },
 
-  
+
 
 });
 

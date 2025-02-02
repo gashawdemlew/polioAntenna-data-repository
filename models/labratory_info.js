@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const PatientDemography = require('./petient_demography'); // Assumed path
 
-const LabratoryInfo = sequelize.define('labaratory_info1', {
+const LabratoryInfo = sequelize.define('labaratory_info', {
   lab_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
