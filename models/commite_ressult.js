@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 
 const Committe = sequelize.define('Committe_result', {
-
+  //
   epid_number: {
     type: DataTypes.STRING,
     // unique: true,
