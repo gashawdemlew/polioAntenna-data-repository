@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a separate configuration file for Sequelize
 
-const demographic = sequelize.define('demographic_by_vol', {
+const demographic = sequelize.define('demographic_by_vol_model', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
