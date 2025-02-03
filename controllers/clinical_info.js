@@ -102,60 +102,81 @@ module.exports = {
 
 
   create: async (req, res) => {
-
     const { hofficer_name, hofficer_phonno, epid_number, message, confidence_interval, prediction } = req.body;
-    console.log(req.body);
+    console.log("Request Body:", req.body); // Log request body for debugging
 
+    // Validate required field
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
 
     try {
+      // Start with multimedia data that always exists
       const multimediaData = { epid_number };
 
+      // Begin a transaction if your database supports it (e.g. Sequelize, Mongoose)
+      // const transaction = await sequelize.transaction();
+      // try {
+
+      // Upsert into the methrologymodel (attempt to create or update a record)
       const [methrologymodelInstance, created] = await methrologymodel.upsert(
         {
           message,
           epid_number,
-          prediction,
+          suspected: prediction,
           confidence_interval,
         },
         { where: { epid_number } }
       );
 
+      console.log(`methrologymodel ${created ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
 
-
+      // Process file uploads
       if (req.files) {
         if (req.files.image) {
           try {
             const compressedImage = await processImage(req.files.image[0].path);
             multimediaData.iamge_path = compressedImage;
           } catch (err) {
+            console.error("Image Processing Error:", err);
+            //   await transaction.rollback();
             return res.status(500).json({ error: `Image processing failed: ${err.message}` });
           }
         }
-
         if (req.files.video) {
           try {
-            // const compressedVideo = await processVideo(req.files.video[0].path);
-            multimediaData.viedeo_path = req.files.video[0].path;
+            const compressedVideo = await processVideo(req.files.video[0].path);
+            multimediaData.viedeo_path = compressedVideo;
           } catch (err) {
+            console.error("Video Processing Error:", err);
+            //   await transaction.rollback();
             return res.status(500).json({ error: `Video processing failed: ${err.message}` });
           }
         }
       }
 
+      // Find patient by epid_number
       const patient = await patientdemModel.findOne({ where: { epid_number } });
-      if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
+      if (!patient) {
+        console.error(`Patient not found with epid_number: ${epid_number}`);
+        // await transaction.rollback();
+        return res.status(404).json({ error: 'Patient not found' });
+      }
+      console.log("Patient Found:", patient.toJSON());
+
+      // Check if a push message already exists for the epid_number
       const existingPushMessage = await pushMessageModel.findOne({ where: { epid_number } });
+
       if (existingPushMessage) {
+        console.log("Existing push message found, updating it:");
         existingPushMessage.hofficer_name = hofficer_name;
         existingPushMessage.hofficer_phonno = hofficer_phonno;
         existingPushMessage.region = patient.region;
         existingPushMessage.zone = patient.zone;
         existingPushMessage.woreda = patient.woreda;
         existingPushMessage.status = 'unseen';
+
         patient.progressNo = 'completed';
 
         await Promise.all([
@@ -164,9 +185,14 @@ module.exports = {
           multimediaModel.upsert(multimediaData, { where: { epid_number } }),
         ]);
 
+        console.log("Updated push message:", existingPushMessage.toJSON());
+        // Commit transaction on success
+        // await transaction.commit();
         return res.status(200).json(existingPushMessage);
       }
 
+      // Create new push message if none exists
+      console.log("No existing push message found, creating new one");
       const pushMessage = new pushMessageModel({
         epid_number,
         first_name: patient.first_name,
@@ -180,17 +206,28 @@ module.exports = {
       });
 
       patient.progressNo = 'completed';
-
+      // Persist all data
       await Promise.all([
         new multimediaModel(multimediaData).save(),
         pushMessage.save(),
         patient.save(),
       ]);
 
+      console.log("Created new push message:", pushMessage.toJSON());
+      // Commit transaction on success
+      //  await transaction.commit();
       res.status(201).json(pushMessage);
+
+      // } catch(transactionErr){
+      //     console.error("Transaction Error:", transactionErr);
+      //     await transaction.rollback();
+      //     res.status(500).json({error:"Error in transaction"});
+
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'An error occurred while processing the request' });
+      // General error handling
+      console.error("General Error:", err);
+      // if (transaction) await transaction.rollback(); // Ensure transaction rollback on error
+      res.status(500).json({ error: 'An error occurred while processing the request', details: err.message });
     }
   },
 
