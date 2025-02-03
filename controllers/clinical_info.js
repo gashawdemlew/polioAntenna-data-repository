@@ -128,14 +128,14 @@ module.exports = {
         },
         { where: { epid_number } }
       );
-      //////////////////////////////////////////////////////////////////////////////////////////////
+
       console.log(`methrologymodel ${created ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
 
       // Process file uploads
       if (req.files) {
         if (req.files.image) {
           try {
-            const compressedImage = await processImage(req.files.image[0].path);
+            // const compressedImage = await processImage(req.files.image[0].path);
             multimediaData.iamge_path = req.files.image[0].path;
           } catch (err) {
             console.error("Image Processing Error:", err);
@@ -145,8 +145,8 @@ module.exports = {
         }
         if (req.files.video) {
           try {
-            const compressedVideo = await processVideo(req.files.video[0].path);
-            multimediaData.viedeo_path = compressedVideo;
+            // const compressedVideo = await processVideo(req.files.video[0].path);
+            multimediaData.viedeo_path = req.files.video[0].path;
           } catch (err) {
             console.error("Video Processing Error:", err);
             //   await transaction.rollback();
@@ -232,6 +232,7 @@ module.exports = {
   },
 
 
+
   createVol: async (req, res) => {
     const { first_name, last_name, user_id, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
     console.log(req.body);
@@ -245,53 +246,30 @@ module.exports = {
         region, woreda, zone, lat, long, gender, phonNo, user_id
       };
 
-      // Handle image upload and processing
       if (req.files && req.files.image) {
-        if (!Array.isArray(req.files.image) || req.files.image.length === 0) {
-          return res.status(400).json({ error: 'Image upload failed: No image file provided.' });
-        }
+        const { path: filePath } = req.files.image[0];
 
-        const imageFile = req.files.image[0];
 
-        try {
-          // const compressedImage = await processImage(imageFile.path);
-          multimediaData.iamge_path = imageFile;
-        } catch (imageError) {
-          console.error("Error processing image:", imageError);
-          return res.status(500).json({ error: `Image processing failed: ${imageError.message || 'Unknown error'}` });
-        }
+        const compressedImage = await processImage(req.files.image[0].path);
+        multimediaData.iamge_path = compressedImage;
       }
 
-      // Handle video upload and processing
       if (req.files && req.files.video) {
-        if (!Array.isArray(req.files.video) || req.files.video.length === 0) {
-          return res.status(400).json({ error: 'Video upload failed: No video file provided.' });
-        }
-        const videoFile = req.files.video[0]
-        try {
-          const compressedVideo = await processVideo(videoFile.path);
-          multimediaData.viedeo_path = compressedVideo;
-        } catch (videoError) {
-          console.error("Error processing video:", videoError);
-          return res.status(500).json({ error: `Video processing failed: ${videoError.message || 'Unknown error'}` });
-        }
+
+
+        // const compressedVideo = await processVideo(req.files.video[0].path);
+        multimediaData.viedeo_path = req.files.video[0].path;
       }
 
       const multimediaDoc = new demographiVolModel(multimediaData);
 
+      await multimediaDoc.save();
 
-      try {
-        await multimediaDoc.save();
-        res.status(201).json(multimediaDoc);
-        console.log(`RRRRRRRRRR ${multimediaDoc}`);
-
-      } catch (dbError) {
-        console.error('Error saving to database:', dbError);
-        res.status(500).json({ error: `Database save failed: ${dbError.message || 'Unknown error'}` });
-      }
+      res.status(201).json(multimediaDoc);
+      console.log(`RRRRRRRRRR ${multimediaDoc}`);
     } catch (error) {
-      console.error("Overall error in createVol:", error);
-      res.status(500).json({ error: `An unexpected error occurred: ${error.message || 'Unknown error'}` });
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while creating the documents' });
     }
   },
 
