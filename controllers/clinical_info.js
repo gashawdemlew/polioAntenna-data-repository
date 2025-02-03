@@ -119,14 +119,20 @@ module.exports = {
       // try {
 
       // Upsert into the methrologymodel (attempt to create or update a record)
+      const epidNumberString = String(epid_number);
+
+      const existingRecord = await methrologymodel.findOne({ where: { epid_number: epidNumberString } });
+      console.log("existing record:", existingRecord);
+
+      // Upsert into the methrologymodel (attempt to create or update a record)
       const [methrologymodelInstance, created] = await methrologymodel.upsert(
         {
           message,
-          epid_number,
-          suspected: prediction,
+          epid_number: epidNumberString,
+          prediction,
           confidence_interval,
         },
-        { where: { epid_number } }
+        { where: { epid_number: epidNumberString } }
       );
 
       console.log(`methrologymodel ${created ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
