@@ -232,7 +232,6 @@ module.exports = {
   },
 
 
-
   createVol: async (req, res) => {
     const { first_name, last_name, user_id, region, woreda, zone, gender, phonNo, hofficer_name, lat, long } = req.body;
     console.log(req.body);
@@ -246,30 +245,53 @@ module.exports = {
         region, woreda, zone, lat, long, gender, phonNo, user_id
       };
 
+      // Handle image upload and processing
       if (req.files && req.files.image) {
-        const { path: filePath } = req.files.image[0];
+        if (!Array.isArray(req.files.image) || req.files.image.length === 0) {
+          return res.status(400).json({ error: 'Image upload failed: No image file provided.' });
+        }
 
+        const imageFile = req.files.image[0];
 
-        const compressedImage = await processImage(req.files.image[0].path);
-        multimediaData.iamge_path = compressedImage;
+        try {
+          const compressedImage = await processImage(imageFile.path);
+          multimediaData.iamge_path = compressedImage;
+        } catch (imageError) {
+          console.error("Error processing image:", imageError);
+          return res.status(500).json({ error: `Image processing failed: ${imageError.message || 'Unknown error'}` });
+        }
       }
 
+      // Handle video upload and processing
       if (req.files && req.files.video) {
-
-
-        const compressedVideo = await processVideo(req.files.video[0].path);
-        multimediaData.viedeo_path = compressedVideo;
+        if (!Array.isArray(req.files.video) || req.files.video.length === 0) {
+          return res.status(400).json({ error: 'Video upload failed: No video file provided.' });
+        }
+        const videoFile = req.files.video[0]
+        try {
+          const compressedVideo = await processVideo(videoFile.path);
+          multimediaData.viedeo_path = compressedVideo;
+        } catch (videoError) {
+          console.error("Error processing video:", videoError);
+          return res.status(500).json({ error: `Video processing failed: ${videoError.message || 'Unknown error'}` });
+        }
       }
 
       const multimediaDoc = new demographiVolModel(multimediaData);
 
-      await multimediaDoc.save();
 
-      res.status(201).json(multimediaDoc);
-      console.log(`RRRRRRRRRR ${multimediaDoc}`);
+      try {
+        await multimediaDoc.save();
+        res.status(201).json(multimediaDoc);
+        console.log(`RRRRRRRRRR ${multimediaDoc}`);
+
+      } catch (dbError) {
+        console.error('Error saving to database:', dbError);
+        res.status(500).json({ error: `Database save failed: ${dbError.message || 'Unknown error'}` });
+      }
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'An error occurred while creating the documents' });
+      console.error("Overall error in createVol:", error);
+      res.status(500).json({ error: `An unexpected error occurred: ${error.message || 'Unknown error'}` });
     }
   },
 
