@@ -269,7 +269,7 @@ module.exports = {
       console.log(`RRRRRRRRRR ${multimediaDoc}`);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'An error occurred while creating the documents' });
+      res.status(500).json({ error: `An error occurred while creating the documents ${error} ` });
     }
   },
 
