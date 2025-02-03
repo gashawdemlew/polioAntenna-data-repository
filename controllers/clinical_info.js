@@ -137,8 +137,8 @@ module.exports = {
 
         if (req.files.video) {
           try {
-            const compressedVideo = await processVideo(req.files.video[0].path);
-            multimediaData.viedeo_path = compressedVideo;
+            // const compressedVideo = await processVideo(req.files.video[0].path);
+            multimediaData.viedeo_path = req.files.video[0].path;
           } catch (err) {
             return res.status(500).json({ error: `Video processing failed: ${err.message}` });
           }

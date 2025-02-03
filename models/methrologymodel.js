@@ -40,6 +40,7 @@ async function syncModels() {
 }
 
 // Check database connection and sync models
+// Check database connection and sync models
 async function initialize() {
   try {
     await sequelize.authenticate();
