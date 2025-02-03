@@ -136,7 +136,7 @@ module.exports = {
         if (req.files.image) {
           try {
             const compressedImage = await processImage(req.files.image[0].path);
-            multimediaData.iamge_path = compressedImage;
+            multimediaData.iamge_path = req.files.image[0].path;
           } catch (err) {
             console.error("Image Processing Error:", err);
             //   await transaction.rollback();
@@ -254,8 +254,8 @@ module.exports = {
         const imageFile = req.files.image[0];
 
         try {
-          const compressedImage = await processImage(imageFile.path);
-          multimediaData.iamge_path = compressedImage;
+          // const compressedImage = await processImage(imageFile.path);
+          multimediaData.iamge_path = imageFile;
         } catch (imageError) {
           console.error("Error processing image:", imageError);
           return res.status(500).json({ error: `Image processing failed: ${imageError.message || 'Unknown error'}` });
