@@ -121,19 +121,27 @@ module.exports = {
       // Upsert into the methrologymodel (attempt to create or update a record)
       const epidNumberString = String(epid_number);
 
-      const existingRecord = await methrologymodel.findOne({ where: { epid_number: epidNumberString } });
-      console.log("existing record:", existingRecord);
+      let methrologymodelInstance = await methrologymodel.findOne({ where: { epid_number: epidNumberString } });
 
-      // Upsert into the methrologymodel (attempt to create or update a record)
-      const [methrologymodelInstance, created] = await methrologymodel.upsert(
-        {
+      if (methrologymodelInstance) {
+        // 2. Update existing record
+        console.log("Updating existing methrologymodel record...");
+        methrologymodelInstance.message = message;
+        methrologymodelInstance.prediction = prediction;
+        methrologymodelInstance.confidence_interval = confidence_interval;
+        await methrologymodelInstance.save();  // Save changes to the existing instance
+        console.log("methrologymodel updated:", methrologymodelInstance.toJSON());
+      } else {
+        // 3. Create new record
+        console.log("Creating new methrologymodel record...");
+        methrologymodelInstance = await methrologymodel.create({
           message,
           epid_number: epidNumberString,
           prediction,
           confidence_interval,
-        },
-        { where: { epid_number: epidNumberString } }
-      );
+        });
+        console.log("methrologymodel created:", methrologymodelInstance.toJSON());
+      }
 
       console.log(`methrologymodel ${created ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
 
@@ -252,19 +260,22 @@ module.exports = {
         region, woreda, zone, lat, long, gender, phonNo, user_id
       };
 
+      const baseUrl = `${req.protocol}://${req.get('host')}`; // Construct the base URL
+
       if (req.files && req.files.image) {
-        const { path: filePath } = req.files.image[0];
+        const imagePath = req.files.image[0].path;
+        const compressedImage = await processImage(imagePath);
 
-
-        const compressedImage = await processImage(req.files.image[0].path);
-        multimediaData.iamge_path = compressedImage;
+        //  Create the full URL to the image
+        multimediaData.iamge_path = `${baseUrl}/${compressedImage}`; // Store the full URL
       }
 
       if (req.files && req.files.video) {
+        const videoPath = req.files.video[0].path;
 
-
-        // const compressedVideo = await processVideo(req.files.video[0].path);
-        multimediaData.viedeo_path = req.files.video[0].path;
+        //const compressedVideo = await processVideo(req.files.video[0].path);
+        //  Create the full URL to the video
+        multimediaData.viedeo_path = `${baseUrl}/${videoPath}`; // Store the full URL
       }
 
       const multimediaDoc = new demographiVolModel(multimediaData);
@@ -1131,19 +1142,19 @@ module.exports = {
         {
           name: 'Clinical History',
           model: clinicalModel,
-          excludeFields: ['createdAt', 'updatedAt', 'clinfo_id', 'user_id']
+          excludeFields: ['createdAt', 'updatedAt', 'epid_number', 'clinfo_id', 'user_id']
         },
         {
-          name: 'Demographic Voluntary', model: demographiVolModel, excludeFields: ['createdAt', 'updatedAt', "region_id", 'user_id']
+          name: 'Demographic Voluntary', model: demographiVolModel, excludeFields: ['createdAt', 'updatedAt', 'epid_number', "region_id", 'user_id']
         },
-        { name: 'Follow-up Investigation', model: followupModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
+        { name: 'Follow-up Investigation', model: followupModel, excludeFields: ['createdAt', 'epid_number', 'updatedAt', 'followup_id', 'user_id'] },
 
 
-        { name: 'Lab Stool Info', model: labstoolModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
-        { name: 'Laboratory Info', model: labratoryModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
-        { name: 'Multimedia Info', model: multimediaModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'user_id'] },
-        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', "result", "dateofbirth", "progressNo", 'followup_id', 'user_id'] },
-        { name: 'Stool Specimen Info', model: stoolspecimanModel, excludeFields: ['createdAt', "id", 'updatedAt', 'petient_id', 'user_id'] },
+        { name: 'Lab Stool Info', model: labstoolModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
+        { name: 'Laboratory Info', model: labratoryModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
+        { name: 'Multimedia Info', model: multimediaModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
+        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', 'epid_number', "result", "dateofbirth", "progressNo", 'followup_id', 'user_id'] },
+        { name: 'Stool Specimen Info', model: stoolspecimanModel, excludeFields: ['createdAt', 'epid_number', "id", 'updatedAt', 'petient_id', 'user_id'] },
       ];
 
       // Execute all model queries in parallel
