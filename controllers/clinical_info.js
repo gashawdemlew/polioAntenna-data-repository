@@ -250,10 +250,10 @@ module.exports = {
 
       if (req.files && req.files.image) {
         const imagePath = req.files.image[0].path;
-        const compressedImage = await processImage(imagePath);
+        // const compressedImage = await processImage(imagePath);
 
         //  Create the full URL to the image
-        multimediaData.iamge_path = `${baseUrl}/${compressedImage}`; // Store the full URL
+        multimediaData.iamge_path = imagePath; // Store the full URL
       }
 
       if (req.files && req.files.video) {
@@ -1043,9 +1043,6 @@ module.exports = {
       res.status(500).send('Server error');
     }
   },
-
-
-
 
 
 
