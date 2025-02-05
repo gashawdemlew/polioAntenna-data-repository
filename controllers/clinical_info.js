@@ -103,67 +103,64 @@ module.exports = {
 
   create: async (req, res) => {
     const { hofficer_name, hofficer_phonno, epid_number, message, confidence_interval, prediction } = req.body;
-    console.log("Request Body:", req.body); // Log request body for debugging
+    console.log("Request Body:", req.body);
 
-    // Validate required field
     if (!epid_number) {
       return res.status(400).json({ error: 'epid_number is required' });
     }
 
     try {
-      // Start with multimedia data that always exists
-      const multimediaData = { epid_number };
+      const multimediaData = { epid_number };  // Always have epid_number
 
-      // Begin a transaction if your database supports it (e.g. Sequelize, Mongoose)
-      // const transaction = await sequelize.transaction();
-      // try {
-
-      // Upsert into the methrologymodel (attempt to create or update a record)
-      const epidNumberString = String(epid_number);
-
-      let methrologymodelInstance = await methrologymodel.findOne({ where: { epid_number: epidNumberString } });
+      // Determine if we created or updated the record
+      let methrologymodelInstance = await methrologymodel.findOne({ where: { epid_number: String(epid_number) } });
+      let recordCreated = false;  // Flag to track create/update
 
       if (methrologymodelInstance) {
-        // 2. Update existing record
+        // Update existing record
         console.log("Updating existing methrologymodel record...");
         methrologymodelInstance.message = message;
         methrologymodelInstance.prediction = prediction;
         methrologymodelInstance.confidence_interval = confidence_interval;
-        await methrologymodelInstance.save();  // Save changes to the existing instance
+        await methrologymodelInstance.save();
         console.log("methrologymodel updated:", methrologymodelInstance.toJSON());
       } else {
-        // 3. Create new record
+        // Create new record
         console.log("Creating new methrologymodel record...");
         methrologymodelInstance = await methrologymodel.create({
           message,
-          epid_number: epidNumberString,
+          epid_number: String(epid_number),
           prediction,
           confidence_interval,
         });
+        recordCreated = true;  // Set the flag
         console.log("methrologymodel created:", methrologymodelInstance.toJSON());
       }
 
-      console.log(`methrologymodel ${created ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
+      console.log(`methrologymodel ${recordCreated ? 'created' : 'updated'}:`, methrologymodelInstance.toJSON());
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`; // Construct the base URL
+      // multimediaData.viedeo_path = `${baseUrl}/${videoPath}`; // Store the full URL
+
 
       // Process file uploads
+
       if (req.files) {
         if (req.files.image) {
           try {
-            // const compressedImage = await processImage(req.files.image[0].path);
-            multimediaData.iamge_path = req.files.image[0].path;
+            multimediaData.iamge_path = req.files.image[0].path;  //Use path directly after upload, no processing needed.
+            // multimediaData.viedeo_path = `${baseUrl}/${videoPath}`; // Store the full URL
+
           } catch (err) {
             console.error("Image Processing Error:", err);
-            //   await transaction.rollback();
             return res.status(500).json({ error: `Image processing failed: ${err.message}` });
           }
         }
         if (req.files.video) {
           try {
-            // const compressedVideo = await processVideo(req.files.video[0].path);
-            multimediaData.viedeo_path = req.files.video[0].path;
+            multimediaData.viedeo_path = req.files.video[0].path; //Use path directly after upload, no processing needed.
           } catch (err) {
             console.error("Video Processing Error:", err);
-            //   await transaction.rollback();
             return res.status(500).json({ error: `Video processing failed: ${err.message}` });
           }
         }
@@ -174,7 +171,6 @@ module.exports = {
 
       if (!patient) {
         console.error(`Patient not found with epid_number: ${epid_number}`);
-        // await transaction.rollback();
         return res.status(404).json({ error: 'Patient not found' });
       }
       console.log("Patient Found:", patient.toJSON());
@@ -200,8 +196,6 @@ module.exports = {
         ]);
 
         console.log("Updated push message:", existingPushMessage.toJSON());
-        // Commit transaction on success
-        // await transaction.commit();
         return res.status(200).json(existingPushMessage);
       }
 
@@ -222,29 +216,19 @@ module.exports = {
       patient.progressNo = 'completed';
       // Persist all data
       await Promise.all([
-        new multimediaModel(multimediaData).save(),
+        multimediaModel.upsert(multimediaData, { where: { epid_number: multimediaData.epid_number } }),
         pushMessage.save(),
         patient.save(),
       ]);
 
       console.log("Created new push message:", pushMessage.toJSON());
-      // Commit transaction on success
-      //  await transaction.commit();
       res.status(201).json(pushMessage);
 
-      // } catch(transactionErr){
-      //     console.error("Transaction Error:", transactionErr);
-      //     await transaction.rollback();
-      //     res.status(500).json({error:"Error in transaction"});
-
     } catch (err) {
-      // General error handling
       console.error("General Error:", err);
-      // if (transaction) await transaction.rollback(); // Ensure transaction rollback on error
       res.status(500).json({ error: 'An error occurred while processing the request', details: err.message });
     }
   },
-
 
 
   createVol: async (req, res) => {
@@ -261,6 +245,8 @@ module.exports = {
       };
 
       const baseUrl = `${req.protocol}://${req.get('host')}`; // Construct the base URL
+      // multimediaData.viedeo_path = `${baseUrl}/${videoPath}`; // Store the full URL
+
 
       if (req.files && req.files.image) {
         const imagePath = req.files.image[0].path;
@@ -384,12 +370,21 @@ module.exports = {
       });
   },
   getData1: (req, res) => {
-    patientdemModel.findAll()
+    patientdemModel.findAll({
+      where: {
+        progressNo: "completed"
+      },
+      order: [['createdAt', 'DESC']]
+    })
       .then((messages) => {
+        if (!messages || messages.length === 0) {
+          return res.status(404).json({ message: 'No completed patients found.' });
+        }
         res.json(messages);
       })
       .catch((error) => {
-        res.status(500).json({ error: 'Failed to retrieve messages' });
+        console.error("Error retrieving completed patients:", error);
+        res.status(500).json({ error: 'Failed to retrieve completed patients.' });
       });
   },
   getData: async (req, res) => {
@@ -1128,7 +1123,6 @@ module.exports = {
     }
   },
 
-
   getDataByEpidNumber: async (req, res) => {
     const { epid_number } = req.params;
     console.log(`Received EPID Number: ${epid_number}`);
@@ -1138,22 +1132,19 @@ module.exports = {
     }
 
     try {
+      const baseUrl = `${req.protocol}s://${req.get('host')}`;
+
       const models = [
         {
           name: 'Clinical History',
           model: clinicalModel,
           excludeFields: ['createdAt', 'updatedAt', 'epid_number', 'clinfo_id', 'user_id']
         },
-        {
-          name: 'Demographic Voluntary', model: demographiVolModel, excludeFields: ['createdAt', 'updatedAt', 'epid_number', "region_id", 'user_id']
-        },
         { name: 'Follow-up Investigation', model: followupModel, excludeFields: ['createdAt', 'epid_number', 'updatedAt', 'followup_id', 'user_id'] },
-
-
         { name: 'Lab Stool Info', model: labstoolModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
         { name: 'Laboratory Info', model: labratoryModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
         { name: 'Multimedia Info', model: multimediaModel, excludeFields: ['createdAt', 'updatedAt', 'followup_id', 'epid_number', 'user_id'] },
-        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', 'epid_number', "result", "dateofbirth", "progressNo", 'followup_id', 'user_id'] },
+        { name: 'Patient Demography', model: patientdemModel, excludeFields: ['createdAt', 'updatedAt', 'epid_number', "result", "dateofbirth", "progressNo", 'petient_id', 'followup_id', 'user_id'] },
         { name: 'Stool Specimen Info', model: stoolspecimanModel, excludeFields: ['createdAt', 'epid_number', "id", 'updatedAt', 'petient_id', 'user_id'] },
       ];
 
@@ -1163,15 +1154,33 @@ module.exports = {
           try {
             const queryOptions = {
               where: { epid_number },
-              order: [['createdAt', 'DESC']], // Order by createdAt descending
-
+              order: [['createdAt', 'DESC']],
             };
-            // Add attributes if excluding specific fields
+
             if (excludeFields) {
               queryOptions.attributes = { exclude: excludeFields };
             }
 
             const data = await model.findOne(queryOptions);
+
+            // If the model is Multimedia Info, construct custom URLs
+            if (name === 'Multimedia Info' && data) {
+              try {
+                data.iamge_path = data.iamge_path ? `${baseUrl}/uploads/${path.basename(data.iamge_path)}` : null;
+                data.viedeo_path = data.viedeo_path ? `${baseUrl}/uploads/${path.basename(data.viedeo_path)}` : null;
+
+
+
+                console.error(`Error constructing multimedia URLs: ${data.iamge_path}`);
+                console.error(`Error constructing multimedia URLs: ${data.viedeo_path}`);
+
+
+              } catch (err) {
+                console.error(`Error constructing multimedia URLs: ${err.message}`);
+              }
+            }
+
+
             return { name, data };
           } catch (err) {
             console.error(`Error fetching data for model "${name}":`, err.message);
