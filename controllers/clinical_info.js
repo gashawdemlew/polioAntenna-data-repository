@@ -521,7 +521,7 @@ module.exports = {
     try {
       // Find the related message for the given epid_number and type
       const message = await labstoolModel.findOne({
-        where: { epid_number, type: "Stool 1" }
+        where: { epid_number, type: type }
       });
 
       if (!message) {
