@@ -16,7 +16,7 @@ const LabratoryInfo = sequelize.define('push_message', {
     type: DataTypes.STRING,
     unique: true,
   },
- 
+
   first_name: {
     type: DataTypes.STRING,
   },
@@ -27,6 +27,9 @@ const LabratoryInfo = sequelize.define('push_message', {
     type: DataTypes.STRING,
   },
   hofficer_phonno: {
+    type: DataTypes.STRING,
+  },
+  region: {
     type: DataTypes.STRING,
   },
 
