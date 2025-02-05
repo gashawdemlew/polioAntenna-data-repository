@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('polioantennaorg_polioCollector', 'polioantennaorg_polioantennaorg', '6zry1F5lsiED', {
+const sequelize = new Sequelize('polioantennaorg_polioAntenna', 'polioantennaorg_polioantennaorg', '6zry1F5lsiED', {
   host: 'localhost',
   port: 5432, // Default PostgreSQL port
   dialect: 'postgres',
@@ -16,4 +16,6 @@ const sequelize = new Sequelize('polioantennaorg_polioCollector', 'polioantennao
 
 
 
+
+module.exports = sequelize;
 module.exports = sequelize;
