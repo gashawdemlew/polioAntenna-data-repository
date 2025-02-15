@@ -530,10 +530,25 @@ module.exports = {
 
       message.completed = 'true';
 
+
+
       // Find existing record
       let existingRecord = await labratoryModel.findOne({
         where: { epid_number, type }
       });
+
+      let stool = await patientdemModel.findOne({ where: { epid_number } });
+
+
+
+
+      const onsetDate = new Date(date_cell_culture_result);
+      const birthDate = new Date(stool.dateofbirth);
+
+      if (onsetDate <= birthDate) {
+        return res.status(400).json({ error: ' date_cell_culture_result date should be greater than  patient date of birth' });
+      }
+
 
       // Update or create lab record
       if (existingRecord) {
@@ -578,10 +593,22 @@ module.exports = {
     const { epid_number, stool_recieved_date, completed, speciement_condition, user_id, type } = req.body;
     console.log(req.body);
 
+
+
     try {
       // Check if a record already exists based on epid_number and type
       let existingRecord = await labstoolModel.findOne({ where: { epid_number, type } });
       let stool = await patientdemModel.findOne({ where: { epid_number } });
+
+
+      const onsetDate = new Date(stool_recieved_date);
+      const birthDate = new Date(stool.dateofbirth);
+
+      if (onsetDate <= birthDate) {
+        return res.status(400).json({ error: 'Stool Recived date should be greater than  patient date of birth' });
+      }
+
+
 
       if (existingRecord) {
         // Update the existing record
@@ -776,7 +803,6 @@ module.exports = {
 
 
 
-
   clinicalHistory: async (req, res) => {
     const {
       epid_number,
@@ -793,19 +819,27 @@ module.exports = {
       facility_name,
       user_id,
     } = req.body;
+
     console.log(req.body);
+
     try {
-
-
-
-
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
+
       if (!message) {
-        return res.status(404).json({ error: 'Message not found' });
+        return res.status(404).json({ error: 'Patient not found' });
+      }
+
+      // Convert both dates to Date objects
+      const onsetDate = new Date(date_after_onset);
+      const birthDate = new Date(message.dateofbirth);
+
+      if (onsetDate <= birthDate) {
+        return res.status(400).json({ error: 'date_after_onset should be greater than  patient date of birth' });
       }
 
       message.progressNo = '2';
       await message.save();
+
       const clinicalDoc = new clinicalModel({
         epid_number,
         fever_at_onset,
@@ -821,13 +855,16 @@ module.exports = {
         facility_name,
         user_id,
       });
-      clinicalDoc.save();
+
+      await clinicalDoc.save();
       res.status(201).json(clinicalDoc);
+
     } catch (error) {
       console.error('Error creating lab info:', error);
       res.status(500).json({ error: 'Error creating data' });
     }
   },
+
   StoolSpeciement: async (req, res) => {
     const {
       epid_number,
@@ -844,6 +881,37 @@ module.exports = {
     try {
       // Find the patient record by epid_number
       const patientRecord = await patientdemModel.findOne({ where: { epid_number: epid_number } });
+
+      const onsetDate = new Date(date_stool_1_collected);
+      const onsetDate1 = new Date(date_stool_2_collected);
+
+      const onsetDate2 = new Date(date_stool_1_sent_lab);
+
+      const onsetDate3 = new Date(date_stool_2_sent_lab);
+
+      const birthDate = new Date(patientRecord.dateofbirth);
+
+      if (onsetDate <= birthDate) {
+        return res.status(400).json({ error: 'date_stool_1_collected should be greater than  patient date of birth' });
+      }
+
+      if (onsetDate1 <= birthDate) {
+        return res.status(400).json({ error: 'date_stool_2_collected should be greater than  patient date of birth' });
+      }
+      if (date_stool_1_sent_lab != null) {
+
+        if (onsetDate2 <= birthDate) {
+          return res.status(400).json({ error: 'date_stool_1_sent_lab should be greater than  patient date of birth' });
+        }
+
+      }
+      if (date_stool_1_sent_lab != null) {
+        if (onsetDate3 <= birthDate) {
+          return res.status(400).json({ error: 'date_stool_2_sent_lab should be greater than  patient date of birth' });
+        }
+
+      }
+
 
       if (!patientRecord) {
         return res.status(404).json({ error: 'Patient not found' });
@@ -942,6 +1010,14 @@ module.exports = {
     console.log(req.body)
     try {
       const message = await patientdemModel.findOne({ where: { epid_number: epid_number } });
+
+
+      const onsetDate = new Date(date_follow_up_investigation);
+      const birthDate = new Date(message.dateofbirth);
+
+      if (onsetDate <= birthDate) {
+        return res.status(400).json({ error: 'date_follow_up_investigation should be greater than  patient date of birth' });
+      }
       console.log(message);
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });

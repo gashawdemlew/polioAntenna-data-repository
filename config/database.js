@@ -18,4 +18,3 @@ const sequelize = new Sequelize('polioantennaorg_polioAntenna', 'polioantennaorg
 
 
 module.exports = sequelize;
-module.exports = sequelize;

@@ -45,6 +45,9 @@ const User = sequelize.define('usertable', {
 
   },
 
+  resetPasswordToken: DataTypes.STRING,
+  resetPasswordExpires: DataTypes.DATE,
+
   status: {
     type: DataTypes.STRING,
     defaultValue: "Active"

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const JWT = process.env.JWT_SECRET
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 
 module.exports = {
 
@@ -176,6 +177,72 @@ module.exports = {
       res.status(500).json({ error: 'Failed to update user' });
     }
   },
+
+
+
+  resetPassword: async (req, res) => {
+    try {
+      const { phoneNo, resetToken, newPassword } = req.body;
+
+      // Check if user exists and token is valid
+      const user = await User.findOne({
+        where: {
+          phoneNo,
+          resetPasswordToken: resetToken,
+          resetPasswordExpires: { [Op.gt]: new Date() } // Token must not be expired
+        }
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password and clear token
+      await user.update({
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null
+      });
+
+      res.status(200).json({ message: 'Password reset successful' });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
+  forgotPassword: async (req, res) => {
+    try {
+      const { phoneNo } = req.body;
+
+      // Check if user exists
+      const user = await User.findOne({ where: { phoneNo } });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Generate a reset token (6-digit OTP)
+      const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+      const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
+
+      // Update user with reset token
+      await user.update({
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: resetTokenExpires,
+      });
+
+      // TODO: Send `resetToken` via SMS or email
+
+      res.status(200).json({ message: 'Reset code sent!', resetToken }); // REMOVE token in production
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
   updateUserPhoNo: async (req, res) => {
     const { phoneNo, first_name, last_name, zone, woreda, region, password, status } = req.body;
 
@@ -212,13 +279,13 @@ module.exports = {
 
 
   deleteStudent: (req, res) => {
-    const id = req.params.id;
-    User.destroy({ where: { id } })
+    const user_id = req.params.user_id;
+    User.destroy({ where: { user_id } })
       .then(() => {
-        res.json({ message: 'Student deleted successfully' });
+        res.json({ message: 'user deleted successfully' });
       })
       .catch((error) => {
-        res.status(500).json({ error: 'Failed to delete student' });
+        res.status(500).json({ error: 'Failed to delete user' });
       });
   },
 };
